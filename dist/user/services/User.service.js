@@ -23,13 +23,23 @@ let UserService = class UserService {
         this.repository = repository;
     }
     async save(data) {
-        await this.repository.save({
+        const existingUser = await this.repository.findOneBy({
+            githubId: data.githubId,
+        });
+        return (await this.repository.save({
+            id: existingUser?.id ?? undefined,
             githubId: data.githubId,
             login: data.login,
             avatarUrl: data.avatarUrl,
             bio: data.bio ?? undefined,
             createdAt: new Date(),
-        });
+        })).id;
+    }
+    async findById(id) {
+        const user = await this.repository.findOneBy({ id });
+        if (!user)
+            throw new common_1.NotFoundException("User not found");
+        return user;
     }
 };
 exports.UserService = UserService;

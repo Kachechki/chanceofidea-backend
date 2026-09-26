@@ -12,15 +12,16 @@ const user_controller_1 = require("./user.controller");
 const User_service_1 = require("./services/User.service");
 const typeorm_1 = require("@nestjs/typeorm");
 const User_entity_1 = require("./entities/User.entity");
+const auth_module_1 = require("../auth/auth.module");
 let UserModule = class UserModule {
 };
 exports.UserModule = UserModule;
 exports.UserModule = UserModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([User_entity_1.UserEntity])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([User_entity_1.UserEntity]), auth_module_1.AuthModule],
         controllers: [user_controller_1.UserController],
         providers: [User_service_1.UserService],
-        exports: [User_service_1.UserService]
+        exports: [User_service_1.UserService],
     })
 ], UserModule);
 //# sourceMappingURL=user.module.js.map

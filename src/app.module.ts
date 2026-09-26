@@ -1,13 +1,12 @@
 import { Module } from "@nestjs/common";
 import { createObserveModule } from "@nestjs/observe";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { UserEntity } from "./user/entities/User.entity";
 import GithubConfig from "./config/Github.config";
+import JwtConfig from "./config/Jwt.config";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -35,10 +34,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [GithubConfig],
+      load: [GithubConfig, JwtConfig],
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

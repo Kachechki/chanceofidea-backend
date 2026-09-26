@@ -13,12 +13,15 @@ exports.AuthService = void 0;
 const config_1 = require("@nestjs/config");
 const User_service_1 = require("../../user/services/User.service");
 const common_1 = require("@nestjs/common");
+const Jwt_service_1 = require("./Jwt.service");
 let AuthService = class AuthService {
     configService;
     userService;
-    constructor(configService, userService) {
+    jwtService;
+    constructor(configService, userService, jwtService) {
         this.configService = configService;
         this.userService = userService;
+        this.jwtService = jwtService;
     }
     async authenticate(code) {
         const accessTokenRes = await fetch("https://github.com/login/oauth/access_token", {
@@ -39,17 +42,19 @@ let AuthService = class AuthService {
                 Accept: "application/json",
             },
         }).then((res) => res.json());
-        await this.userService.save({
+        const userId = await this.userService.save({
             avatarUrl: profileData.avatar_url,
             login: profileData.login,
             githubId: profileData.id,
         });
+        return await this.jwtService.sign({ id: userId });
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
-        User_service_1.UserService])
+        User_service_1.UserService,
+        Jwt_service_1.JwtTokenService])
 ], AuthService);
 //# sourceMappingURL=Auth.service.js.map

@@ -20,16 +20,19 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async oAuthCallback(code) {
-        await this.authService.authenticate(code);
+    async oAuthCallback(code, res) {
+        const jwtPair = await this.authService.authenticate(code);
+        console.log(jwtPair);
+        res.set({ access: jwtPair.access, refresh: jwtPair.refresh });
     }
 };
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Get)("oauth_callback"),
     __param(0, (0, common_1.Query)("code")),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "oAuthCallback", null);
 exports.AuthController = AuthController = __decorate([
