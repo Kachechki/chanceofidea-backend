@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserEntity = void 0;
 const typeorm_1 = require("typeorm");
+const Project_entity_1 = require("../../project/entities/Project.entity");
 let UserEntity = class UserEntity {
     id;
     githubId;
@@ -18,6 +19,7 @@ let UserEntity = class UserEntity {
     avatarUrl;
     bio;
     createdAt;
+    projects;
 };
 exports.UserEntity = UserEntity;
 __decorate([
@@ -44,6 +46,11 @@ __decorate([
     (0, typeorm_1.Column)({ type: "timestamptz", update: false }),
     __metadata("design:type", Date)
 ], UserEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.JoinColumn)(),
+    (0, typeorm_1.ManyToOne)(() => Project_entity_1.ProjectEntity, (project) => project.owner),
+    __metadata("design:type", Project_entity_1.ProjectEntity)
+], UserEntity.prototype, "projects", void 0);
 exports.UserEntity = UserEntity = __decorate([
     (0, typeorm_1.Entity)()
 ], UserEntity);

@@ -5,8 +5,14 @@ import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { UserEntity } from "./user/entities/User.entity";
+import { ProjectModule } from "./project/project.module";
+import { CategoryModule } from "./category/category.module";
+import { TagModule } from "./tag/tag.module";
 import GithubConfig from "./config/Github.config";
 import JwtConfig from "./config/Jwt.config";
+import { ProjectEntity } from "./project/entities/Project.entity";
+import { CategoryEntity } from "./category/entities/Category.entity";
+import { TagEntity } from "./tag/entities/Tag.entity";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -26,7 +32,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       username: process.env.DB_USER ?? "admin",
       password: process.env.DB_PASSWORD ?? "admin",
       database: process.env.DB_NAME ?? "database",
-      entities: [UserEntity],
+      entities: [UserEntity, ProjectEntity, CategoryEntity, TagEntity],
       synchronize: false,
       migrations: [__dirname + "/migrations/*{.js,.ts}"],
     }),
@@ -36,6 +42,9 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       isGlobal: true,
       load: [GithubConfig, JwtConfig],
     }),
+    ProjectModule,
+    CategoryModule,
+    TagModule,
   ],
 })
 export class AppModule {}

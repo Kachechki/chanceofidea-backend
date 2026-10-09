@@ -22,7 +22,6 @@ let AuthController = class AuthController {
     }
     async oAuthCallback(code, res) {
         const jwtPair = await this.authService.authenticate(code);
-        console.log(jwtPair);
         res.set({ access: jwtPair.access, refresh: jwtPair.refresh });
     }
 };

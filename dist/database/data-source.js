@@ -37,6 +37,9 @@ exports.AppDataSource = void 0;
 const typeorm_1 = require("typeorm");
 const dotenv = __importStar(require("dotenv"));
 const User_entity_1 = require("../user/entities/User.entity");
+const Project_entity_1 = require("../project/entities/Project.entity");
+const Category_entity_1 = require("../category/entities/Category.entity");
+const Tag_entity_1 = require("../tag/entities/Tag.entity");
 dotenv.config();
 exports.AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
@@ -45,7 +48,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     username: process.env.DB_USER ?? "root",
     password: process.env.DB_PASSWORD ?? "root",
     database: process.env.DB_NAME ?? "test",
-    entities: [User_entity_1.UserEntity],
+    entities: [User_entity_1.UserEntity, Project_entity_1.ProjectEntity, Category_entity_1.CategoryEntity, Tag_entity_1.TagEntity],
     synchronize: false,
     migrations: [__dirname + "/migrations/*{.js,.ts}"],
 });

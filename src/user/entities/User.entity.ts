@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from "typeorm";
+import { ProjectEntity } from "../../project/entities/Project.entity";
 
 @Entity()
 export class UserEntity {
@@ -19,4 +26,8 @@ export class UserEntity {
 
   @Column({ type: "timestamptz", update: false })
   createdAt: Date;
+
+  @JoinColumn()
+  @ManyToOne(() => ProjectEntity, (project) => project.owner)
+  projects: ProjectEntity;
 }

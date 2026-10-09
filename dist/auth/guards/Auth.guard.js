@@ -45,7 +45,6 @@ let AuthGuard = class AuthGuard {
         return type === "Bearer" ? token : undefined;
     }
     useRefresh(req) {
-        console.log(req.cookies);
         return req.cookies?.refresh ?? undefined;
     }
 };

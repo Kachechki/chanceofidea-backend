@@ -18,8 +18,14 @@ const user_module_1 = require("./user/user.module");
 const auth_module_1 = require("./auth/auth.module");
 const config_1 = require("@nestjs/config");
 const User_entity_1 = require("./user/entities/User.entity");
+const project_module_1 = require("./project/project.module");
+const category_module_1 = require("./category/category.module");
+const tag_module_1 = require("./tag/tag.module");
 const Github_config_1 = __importDefault(require("./config/Github.config"));
 const Jwt_config_1 = __importDefault(require("./config/Jwt.config"));
+const Project_entity_1 = require("./project/entities/Project.entity");
+const Category_entity_1 = require("./category/entities/Category.entity");
+const Tag_entity_1 = require("./tag/entities/Tag.entity");
 _a = (0, observe_1.createObserveModule)(), exports.ObserveModule = _a.ObserveModule, exports.ObserveInstrument = _a.ObserveInstrument;
 let AppModule = class AppModule {
 };
@@ -34,7 +40,7 @@ exports.AppModule = AppModule = __decorate([
                 username: process.env.DB_USER ?? "admin",
                 password: process.env.DB_PASSWORD ?? "admin",
                 database: process.env.DB_NAME ?? "database",
-                entities: [User_entity_1.UserEntity],
+                entities: [User_entity_1.UserEntity, Project_entity_1.ProjectEntity, Category_entity_1.CategoryEntity, Tag_entity_1.TagEntity],
                 synchronize: false,
                 migrations: [__dirname + "/migrations/*{.js,.ts}"],
             }),
@@ -44,6 +50,9 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 load: [Github_config_1.default, Jwt_config_1.default],
             }),
+            project_module_1.ProjectModule,
+            category_module_1.CategoryModule,
+            tag_module_1.TagModule,
         ],
     })
 ], AppModule);

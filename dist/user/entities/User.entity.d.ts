@@ -1,3 +1,4 @@
+import { ProjectEntity } from "../../project/entities/Project.entity";
 export declare class UserEntity {
     id: string;
     githubId: number;
@@ -5,4 +6,5 @@ export declare class UserEntity {
     avatarUrl: string;
     bio: string;
     createdAt: Date;
+    projects: ProjectEntity;
 }
