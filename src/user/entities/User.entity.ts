@@ -2,7 +2,7 @@ import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { ProjectEntity } from "../../project/entities/Project.entity";
@@ -28,6 +28,6 @@ export class UserEntity {
   createdAt: Date;
 
   @JoinColumn()
-  @ManyToOne(() => ProjectEntity, (project) => project.owner)
+  @OneToMany(() => ProjectEntity, (project) => project.owner)
   projects: ProjectEntity;
 }

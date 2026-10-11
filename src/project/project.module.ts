@@ -6,6 +6,7 @@ import { ProjectEntity } from "./entities/Project.entity";
 import { CategoryModule } from "../category/category.module";
 import { TagModule } from "../tag/tag.module";
 import { AuthModule } from "../auth/auth.module";
+import { UserModule } from "../user/user.module";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AuthModule } from "../auth/auth.module";
     CategoryModule,
     TagModule,
     AuthModule,
+    UserModule,
   ],
   controllers: [ProjectController],
   providers: [ProjectService],

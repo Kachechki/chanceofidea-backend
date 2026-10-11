@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { ICreateCategoryOrTag } from "../../types/CreateCategoryOrTag.interface";
 import { Repository } from "typeorm";
 import { CategoryEntity } from "../entities/Category.entity";
@@ -7,6 +11,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 interface ICategoryService {
   create(data: ICreateCategoryOrTag): Promise<string>;
   findById(id: string): Promise<CategoryEntity>;
+  findBySlug(slug: stirng): Promise<CategoryEntity>;
 }
 
 @Injectable()
@@ -35,5 +40,12 @@ export class CategoryService implements ICategoryService {
     if (!category) throw new NotFoundException("Category not found");
 
     return category;
+  }
+
+  async findBySlug(slug: stirng): Promise<CategoryEntity> {
+    const category = await this.repository.findOneBy({ slug });
+    if (!category) throw new NotFoundException("Category not foud");
+
+    return category
   }
 }

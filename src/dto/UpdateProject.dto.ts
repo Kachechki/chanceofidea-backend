@@ -7,21 +7,21 @@ export class UpdateProjectDto {
 
   @IsOptional()
   @IsString()
-  title: string;
+  title?: string;
 
   @IsOptional()
   @Transform(({ value }) => Math.min(1, Math.max(0, value)))
-  readiness: number;
+  readiness?: number;
 
   @IsOptional()
   @IsUUID()
-  category: string;
+  category?: string;
 
   @IsOptional()
   @IsUUID(4, { each: true })
-  tags: string[];
+  tags?: string[];
 
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 }

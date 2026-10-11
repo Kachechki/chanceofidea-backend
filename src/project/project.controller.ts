@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query,
@@ -15,7 +16,8 @@ import { type IRequestWithRefresh } from "../types/RequestWithRefresh.interface"
 import { AuthGuard } from "../auth/guards/Auth.guard";
 import { ProjectGuard } from "./guards/Project.guard";
 import { UpdateProjectDto } from "../dto/UpdateProject.dto";
-import { GetDeleteProjectDto } from "../dto/GetDeleteProject.dto";
+import { ProjectIdDto } from "../dto/GetDeleteProject.dto";
+import { FetchFilteredProjects } from "../dto/FetchFilteredProjects.dto";
 
 @Controller("project")
 export class ProjectController {
@@ -24,6 +26,7 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   @Post()
   async create(@Body() dto: CreateProjectDto, @Req() req: IRequestWithRefresh) {
+    console.log(req.user.id);
     await this.projectService.create({
       ...dto,
       ownerId: req.user.id,
@@ -32,7 +35,7 @@ export class ProjectController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async get(@Query() dto: GetDeleteProjectDto) {
+  async get(@Query() dto: ProjectIdDto) {
     return await this.projectService.findById(dto.id);
   }
 
@@ -44,7 +47,22 @@ export class ProjectController {
 
   @UseGuards(AuthGuard, ProjectGuard)
   @Delete()
-  async delete(@Query() dto: GetDeleteProjectDto) {
+  async delete(@Query() dto: ProjectIdDto) {
     await this.projectService.delete(dto.id);
+  }
+
+  @UseGuards(AuthGuard, ProjectGuard)
+  @Post("publish")
+  async publish(@Query() dto: ProjectIdDto) {
+    await this.projectService.publish(dto.id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get("projects/:page")
+  async filter(
+    @Query() dto: FetchFilteredProjects,
+    @Param("page") page: number,
+  ) {
+    await this.projectService.findFiltered({ ...dto, page });
   }
 }

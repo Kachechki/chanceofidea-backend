@@ -14,9 +14,6 @@ export class CreateProjectDto {
   @IsString()
   title: string;
 
-  @IsEnum(ProjectStatusEnum)
-  status: ProjectStatusEnum;
-
   @IsOptional()
   @Transform(({ value }) => Math.min(1, Math.max(0, value)))
   readiness: number;

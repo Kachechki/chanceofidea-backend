@@ -11,6 +11,8 @@ import { CategoryService } from "../../category/services/Category.sevice";
 import { TagService } from "../../tag/services/Tag.service";
 import { IUpdateProject } from "../../types/UpdateProject.interface";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
+import { UserService } from "../../user/services/User.service";
+import { IFindFilteredProjects } from "../../types/FindFilteredProjects.interface";
 
 interface IProjectSerice {
   create(data: ICreateProject): Promise<void>;
@@ -20,6 +22,8 @@ interface IProjectSerice {
   ): Promise<ProjectEntity>;
   update(data: IUpdateProject): Promise<void>;
   delete(id: string): Promise<void>;
+  publish(id: string): Promise<void>;
+  findFiltered(data: IFindFilteredProjects): Promise<ProjectEntity[]>;
 }
 
 @Injectable()
@@ -29,6 +33,7 @@ export class ProjectService implements IProjectSerice {
     private readonly repository: Repository<ProjectEntity>,
     private readonly categoryService: CategoryService,
     private readonly tagService: TagService,
+    private readonly userService: UserService,
   ) {}
 
   async create(data: ICreateProject): Promise<void> {
@@ -44,6 +49,8 @@ export class ProjectService implements IProjectSerice {
     if (tags.length == 0)
       throw new BadRequestException("No project tags provided");
 
+    const owner = await this.userService.findById(data.ownerId);
+
     await this.repository.save({
       ...data,
       categoryName: undefined,
@@ -53,6 +60,8 @@ export class ProjectService implements IProjectSerice {
       status: data.publish
         ? ProjectStatusEnum.PUBLISHED
         : ProjectStatusEnum.DRAFT,
+      createdAt: new Date(),
+      owner,
     });
   }
 
@@ -66,7 +75,7 @@ export class ProjectService implements IProjectSerice {
       },
       relations,
     });
-    if (!project) throw new NotFoundException("Project not foud");
+    if (!project) throw new NotFoundException("Project not found");
 
     return project;
   }
@@ -80,15 +89,48 @@ export class ProjectService implements IProjectSerice {
       : undefined;
 
     await this.repository.save({
-      id: data.id,
+      ...data,
       category,
-      description: data.description,
-      readiness: data.readiness,
       tags,
     });
   }
 
   async delete(id: string): Promise<void> {
     await this.repository.delete(id);
+  }
+
+  async publish(id: string): Promise<void> {
+    const project = await this.findById(id);
+
+    if (
+      [ProjectStatusEnum.DRAFT, ProjectStatusEnum.PUBLISHED].includes(
+        project.status,
+      )
+    )
+      project.status = ProjectStatusEnum.PUBLISHED;
+    else throw new BadRequestException("Invalid current project state");
+
+    await this.repository.save(project);
+  }
+
+  async findFiltered(data: IFindFilteredProjects): Promise<ProjectEntity[]> {
+    const categories = await Promise.all(
+      data.categorySlugs.map((slug) => this.categoryService.findBySlug(slug)),
+    );
+
+    const tags = await Promise.all(
+      data.tagSlugs.map((slug) => this.tagService.findBySlug(slug))
+    )
+
+    const projects = await this.repository.find({
+      where: {
+        category: categories,
+        tags
+      },
+      skip: data.page * 20,
+      take: 20
+    }) 
+
+    return projects
   }
 }

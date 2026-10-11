@@ -1,6 +1,6 @@
-import { IsOptional, IsString, IsUUID } from "class-validator";
+import { IsOptional, IsUUID } from "class-validator";
 
-export class GetDeleteProjectDto {
+export class ProjectIdDto {
   @IsOptional()
   @IsUUID()
   id: string;

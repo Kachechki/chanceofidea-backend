@@ -7,6 +7,7 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 interface ITagService {
   create(data: ICreateCategoryOrTag): Promise<string>;
   findById(id: string): Promise<TagEntity>;
+  findBySlug(slug: string): Promise<TagEntity>;
 }
 
 export class TagService implements ITagService {
@@ -25,6 +26,13 @@ export class TagService implements ITagService {
   }
 
   async findById(id: string): Promise<TagEntity> {
+    const tag = await this.repository.findOneBy({ id });
+    if (!tag) throw new NotFoundException("Tag not found");
+
+    return tag;
+  }
+
+  async findBySlug(slug: string): Promise<TagEntity> {
     const tag = await this.repository.findOneBy({ id });
     if (!tag) throw new NotFoundException("Tag not found");
 

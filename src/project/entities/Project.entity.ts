@@ -2,9 +2,9 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { UserEntity } from "../../user/entities/User.entity";
@@ -33,18 +33,19 @@ export class ProjectEntity {
   repositoryId: number;
 
   @Column({ update: false })
-  repostoryUrl: string;
+  repositoryUrl: string;
 
   @Column({ type: "timestamptz", update: false })
   createdAt: Date;
 
-  @OneToMany(() => UserEntity, (user) => user.projects)
+  @ManyToOne(() => UserEntity, (user) => user.projects)
   owner: UserEntity;
 
   @JoinColumn()
   @ManyToOne(() => CategoryEntity)
   category: CategoryEntity;
 
+  @JoinTable()
   @ManyToMany(() => TagEntity, (tags) => tags.projects)
   tags: TagEntity[];
 }
