@@ -114,20 +114,23 @@ export class ProjectService implements IProjectSerice {
   }
 
   async findFiltered(data: IFindFilteredProjects): Promise<ProjectEntity[]> {
+    const categorySlugs = data.categorySlugs ?? [];
+    const tagSlugs = data.tagSlugs ?? [];
+
     const categories =
-      typeof data.categorySlugs == "string"
-        ? [await this.categoryService.findBySlug(data.categorySlugs)]
+      typeof categorySlugs == "string"
+        ? [await this.categoryService.findBySlug(categorySlugs)]
         : await Promise.all(
-            data.categorySlugs.map((slug) =>
+            categorySlugs.map((slug) =>
               this.categoryService.findBySlug(slug),
             ),
           );
 
     const tags =
-      typeof data.tagSlugs == "string"
-        ? [await this.tagService.findBySlug(data.tagSlugs)]
+      typeof tagSlugs == "string"
+        ? [await this.tagService.findBySlug(tagSlugs)]
         : await Promise.all(
-            data.tagSlugs.map((slug) => this.tagService.findBySlug(slug)),
+            tagSlugs.map((slug) => this.tagService.findBySlug(slug)),
           );
 
     const categoryIds = categories.map(({ id }) => id);
