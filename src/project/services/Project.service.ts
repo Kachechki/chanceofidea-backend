@@ -114,23 +114,62 @@ export class ProjectService implements IProjectSerice {
   }
 
   async findFiltered(data: IFindFilteredProjects): Promise<ProjectEntity[]> {
-    const categories = await Promise.all(
-      data.categorySlugs.map((slug) => this.categoryService.findBySlug(slug)),
-    );
+    const categories =
+      typeof data.categorySlugs == "string"
+        ? [await this.categoryService.findBySlug(data.categorySlugs)]
+        : await Promise.all(
+            data.categorySlugs.map((slug) =>
+              this.categoryService.findBySlug(slug),
+            ),
+          );
 
-    const tags = await Promise.all(
-      data.tagSlugs.map((slug) => this.tagService.findBySlug(slug))
-    )
+    const tags =
+      typeof data.tagSlugs == "string"
+        ? [await this.tagService.findBySlug(data.tagSlugs)]
+        : await Promise.all(
+            data.tagSlugs.map((slug) => this.tagService.findBySlug(slug)),
+          );
 
-    const projects = await this.repository.find({
-      where: {
-        category: categories,
-        tags
-      },
-      skip: data.page * 20,
-      take: 20
-    }) 
+    const categoryIds = categories.map(({ id }) => id);
+    const tagIds = tags.map(({ id }) => id);
 
-    return projects
+    const query = this.repository
+      .createQueryBuilder("project")
+      .leftJoinAndSelect("project.category", "category")
+      .leftJoinAndSelect("project.tags", "tag");
+
+    if (categoryIds.length > 0) {
+      query.andWhere("category.id IN (:...categoryIds)", {
+        categoryIds,
+      });
+    }
+
+    if (tagIds.length > 0) {
+      query.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select("taggedProject.id")
+          .from(ProjectEntity, "taggedProject")
+          .innerJoin("taggedProject.tags", "matchedTag")
+          .where("matchedTag.id IN (:...tagIds)")
+          .groupBy("taggedProject.id")
+          .having("COUNT(DISTINCT matchedTag.id) = :tagCount")
+          .getQuery();
+
+        return `project.id IN ${subQuery}`;
+      });
+
+      query.setParameters({
+        tagIds,
+        tagCount: tagIds.length,
+      });
+    }
+
+    const projects = await query
+      .skip(data.page * 20)
+      .take(20)
+      .getMany();
+
+    return projects;
   }
 }

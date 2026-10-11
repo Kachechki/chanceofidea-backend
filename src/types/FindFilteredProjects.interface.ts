@@ -1,5 +1,5 @@
 export interface IFindFilteredProjects {
-    categorySlugs: string[];
-    tagSlugs: string[];
+    categorySlugs: string[] | string;
+    tagSlugs: string[] | string;
     page: number;
 }

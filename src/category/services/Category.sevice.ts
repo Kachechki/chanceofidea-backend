@@ -11,7 +11,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 interface ICategoryService {
   create(data: ICreateCategoryOrTag): Promise<string>;
   findById(id: string): Promise<CategoryEntity>;
-  findBySlug(slug: stirng): Promise<CategoryEntity>;
+  findBySlug(slug: string): Promise<CategoryEntity>;
 }
 
 @Injectable()
@@ -42,7 +42,7 @@ export class CategoryService implements ICategoryService {
     return category;
   }
 
-  async findBySlug(slug: stirng): Promise<CategoryEntity> {
+  async findBySlug(slug: string): Promise<CategoryEntity> {
     const category = await this.repository.findOneBy({ slug });
     if (!category) throw new NotFoundException("Category not foud");
 

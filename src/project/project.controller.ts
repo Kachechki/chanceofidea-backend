@@ -63,6 +63,6 @@ export class ProjectController {
     @Query() dto: FetchFilteredProjects,
     @Param("page") page: number,
   ) {
-    await this.projectService.findFiltered({ ...dto, page });
+    return await this.projectService.findFiltered({ ...dto, page });
   }
 }

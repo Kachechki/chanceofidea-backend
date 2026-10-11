@@ -33,7 +33,7 @@ export class TagService implements ITagService {
   }
 
   async findBySlug(slug: string): Promise<TagEntity> {
-    const tag = await this.repository.findOneBy({ id });
+    const tag = await this.repository.findOneBy({ slug });
     if (!tag) throw new NotFoundException("Tag not found");
 
     return tag;
