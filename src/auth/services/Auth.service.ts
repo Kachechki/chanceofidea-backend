@@ -3,6 +3,7 @@ import { UserService } from "../../user/services/User.service";
 import { Injectable } from "@nestjs/common";
 import { JwtTokenService } from "./Jwt.service";
 import { IJwtPair } from "../../types/JwtPair.interface";
+import { GithubAccessService } from "./GithubAccess.service";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
@@ -14,6 +15,7 @@ export class AuthService implements IAuthService {
     private configService: ConfigService,
     private readonly userService: UserService,
     private readonly jwtService: JwtTokenService,
+    private readonly githubAccessService: GithubAccessService,
   ) {}
 
   async authenticate(code: string): Promise<IJwtPair> {
@@ -45,6 +47,8 @@ export class AuthService implements IAuthService {
       login: profileData.login,
       githubId: profileData.id,
     });
+
+    await this.githubAccessService.save(accessTokenRes.access_token, userId);
 
     return await this.jwtService.sign({ id: userId });
   }

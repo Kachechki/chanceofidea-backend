@@ -26,7 +26,6 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   @Post()
   async create(@Body() dto: CreateProjectDto, @Req() req: IRequestWithRefresh) {
-    console.log(req.user.id);
     await this.projectService.create({
       ...dto,
       ownerId: req.user.id,

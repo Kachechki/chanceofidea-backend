@@ -3,9 +3,11 @@ import {
   Entity,
   JoinColumn,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { ProjectEntity } from "../../project/entities/Project.entity";
+import { GithubAccessEntity } from "../../auth/entities/GithubAccess.entity";
 
 @Entity()
 export class UserEntity {
@@ -28,6 +30,16 @@ export class UserEntity {
   createdAt: Date;
 
   @JoinColumn()
-  @OneToMany(() => ProjectEntity, (project) => project.owner)
+  @OneToMany(() => ProjectEntity, (project) => project.owner, {
+    onDelete: "CASCADE",
+    cascade: true,
+  })
   projects: ProjectEntity;
+
+  @JoinColumn()
+  @OneToOne(() => GithubAccessEntity, (gae) => gae.user, {
+    onDelete: "CASCADE",
+    cascade: true,
+  })
+  githubAccessToken: GithubAccessEntity;
 }

@@ -30,10 +30,7 @@ export class ProjectEntity {
   description: string;
 
   @Column({ update: false })
-  repositoryId: number;
-
-  @Column({ update: false })
-  repositoryUrl: string;
+  repositoryName: string;
 
   @Column({ type: "timestamptz", update: false })
   createdAt: Date;
@@ -42,10 +39,16 @@ export class ProjectEntity {
   owner: UserEntity;
 
   @JoinColumn()
-  @ManyToOne(() => CategoryEntity)
+  @ManyToOne(() => CategoryEntity, {
+    onDelete: "CASCADE",
+    cascade: true,
+  })
   category: CategoryEntity;
 
   @JoinTable()
-  @ManyToMany(() => TagEntity, (tags) => tags.projects)
+  @ManyToMany(() => TagEntity, (tags) => tags.projects, {
+    onDelete: "CASCADE",
+    cascade: true,
+  })
   tags: TagEntity[];
 }

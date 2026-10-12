@@ -12,6 +12,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const jwtPair = await this.authService.authenticate(code);
+    console.log(jwtPair);
 
     res.set({ access: jwtPair.access, refresh: jwtPair.refresh });
   }

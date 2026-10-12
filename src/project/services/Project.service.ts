@@ -51,6 +51,14 @@ export class ProjectService implements IProjectSerice {
 
     const owner = await this.userService.findById(data.ownerId);
 
+    const res = await fetch(
+      `https://api.github.com/repos/${owner.login}/${data.repositoryName}`,
+    );
+
+    if (!res.ok) throw new Error(`Github API error: ${res.status}`);
+
+    const repository = await res.json();
+
     await this.repository.save({
       ...data,
       categoryName: undefined,
@@ -62,6 +70,7 @@ export class ProjectService implements IProjectSerice {
         : ProjectStatusEnum.DRAFT,
       createdAt: new Date(),
       owner,
+      repositoryName: repository.name,
     });
   }
 
@@ -121,9 +130,7 @@ export class ProjectService implements IProjectSerice {
       typeof categorySlugs == "string"
         ? [await this.categoryService.findBySlug(categorySlugs)]
         : await Promise.all(
-            categorySlugs.map((slug) =>
-              this.categoryService.findBySlug(slug),
-            ),
+            categorySlugs.map((slug) => this.categoryService.findBySlug(slug)),
           );
 
     const tags =

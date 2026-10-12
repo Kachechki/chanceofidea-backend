@@ -13,6 +13,8 @@ import JwtConfig from "./config/Jwt.config";
 import { ProjectEntity } from "./project/entities/Project.entity";
 import { CategoryEntity } from "./category/entities/Category.entity";
 import { TagEntity } from "./tag/entities/Tag.entity";
+import { GithubAccessEntity } from "./auth/entities/GithubAccess.entity";
+import { GithubModule } from './github/github.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -32,7 +34,13 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       username: process.env.DB_USER ?? "admin",
       password: process.env.DB_PASSWORD ?? "admin",
       database: process.env.DB_NAME ?? "database",
-      entities: [UserEntity, ProjectEntity, CategoryEntity, TagEntity],
+      entities: [
+        UserEntity,
+        ProjectEntity,
+        CategoryEntity,
+        TagEntity,
+        GithubAccessEntity,
+      ],
       synchronize: false,
       migrations: [__dirname + "/migrations/*{.js,.ts}"],
     }),
@@ -45,6 +53,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ProjectModule,
     CategoryModule,
     TagModule,
+    GithubModule,
   ],
 })
 export class AppModule {}
