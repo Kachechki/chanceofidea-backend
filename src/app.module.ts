@@ -15,6 +15,8 @@ import { CategoryEntity } from "./category/entities/Category.entity";
 import { TagEntity } from "./tag/entities/Tag.entity";
 import { GithubAccessEntity } from "./auth/entities/GithubAccess.entity";
 import { GithubModule } from './github/github.module';
+import { CategoriesSeederModule } from './categories-seeder/categories-seeder.module';
+import { TagsSeederModule } from './tags-seeder/tags-seeder.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -54,6 +56,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     CategoryModule,
     TagModule,
     GithubModule,
+    CategoriesSeederModule,
+    TagsSeederModule,
   ],
 })
 export class AppModule {}
