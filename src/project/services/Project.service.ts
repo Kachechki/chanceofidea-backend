@@ -13,6 +13,9 @@ import { IUpdateProject } from "../../types/UpdateProject.interface";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 import { UserService } from "../../user/services/User.service";
 import { IFindFilteredProjects } from "../../types/FindFilteredProjects.interface";
+import { IProjectForceUpdate } from "../../types/ProjectForceUpdate.interface";
+import { OnEvent } from "@nestjs/event-emitter";
+import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 
 interface IProjectSerice {
   create(data: ICreateProject): Promise<void>;
@@ -24,6 +27,8 @@ interface IProjectSerice {
   delete(id: string): Promise<void>;
   publish(id: string): Promise<void>;
   findFiltered(data: IFindFilteredProjects): Promise<ProjectEntity[]>;
+  handleTransferFailed(transferSessionId: string): Promise<void>;
+  handleTransferSuccess(transferSessionId: string): Promise<void>;
 }
 
 @Injectable()
@@ -34,6 +39,7 @@ export class ProjectService implements IProjectSerice {
     private readonly categoryService: CategoryService,
     private readonly tagService: TagService,
     private readonly userService: UserService,
+    private readonly transferSessionService: TransferSessionService,
   ) {}
 
   async create(data: ICreateProject): Promise<void> {
@@ -97,6 +103,16 @@ export class ProjectService implements IProjectSerice {
       ? await Promise.all(data.tags.map((tag) => this.tagService.findById(tag)))
       : undefined;
 
+    const project = await this.findById(data.id);
+    if (
+      [ProjectStatusEnum.TRANSFERRING, ProjectStatusEnum.ADOPTED].includes(
+        project.status,
+      )
+    )
+      throw new BadRequestException(
+        "No actions allowed while the project is being transfered, or if it's already adopted",
+      );
+
     await this.repository.save({
       ...data,
       category,
@@ -105,6 +121,16 @@ export class ProjectService implements IProjectSerice {
   }
 
   async delete(id: string): Promise<void> {
+    const project = await this.findById(id);
+    if (
+      [ProjectStatusEnum.TRANSFERRING, ProjectStatusEnum.ADOPTED].includes(
+        project.status,
+      )
+    )
+      throw new BadRequestException(
+        "No actions allowed while the project is being transfered, or if it's already adopted",
+      );
+
     await this.repository.delete(id);
   }
 
@@ -181,5 +207,35 @@ export class ProjectService implements IProjectSerice {
       .getMany();
 
     return projects;
+  }
+
+  @OnEvent("transfer.failed")
+  async handleTransferFailed(transferSessionId: string): Promise<void> {
+    const transferSession = await this.transferSessionService.findById(
+      transferSessionId,
+      {
+        project: true,
+      },
+    );
+    const project = transferSession.project;
+
+    project.status = ProjectStatusEnum.ADOPTED;
+
+    await this.repository.save(project);
+  }
+
+  @OnEvent("transfer.success")
+  async handleTransferSuccess(transferSessionId: string): Promise<void> {
+    const transferSession = await this.transferSessionService.findById(
+      transferSessionId,
+      {
+        project: true,
+      },
+    );
+    const project = transferSession.project;
+
+    project.status = ProjectStatusEnum.DRAFT;
+
+    await this.repository.save(project);
   }
 }

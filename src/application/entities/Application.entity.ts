@@ -24,6 +24,7 @@ export class ApplicationEntity {
 
   @Column()
   whyMe: string;
+
   @Column({ nullable: true })
   plan: string;
 

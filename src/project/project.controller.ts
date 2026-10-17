@@ -35,7 +35,12 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   @Get()
   async get(@Query() dto: ProjectIdDto) {
-    return await this.projectService.findById(dto.id);
+    return await this.projectService.findById(dto.id, {
+      applications: true,
+      category: true,
+      owner: true,
+      tags: true,
+    });
   }
 
   @UseGuards(AuthGuard, ProjectGuard)

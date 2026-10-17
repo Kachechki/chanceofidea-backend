@@ -2,9 +2,13 @@ import { Injectable } from "@nestjs/common";
 import { IGithubRepository } from "../../types/GithubRepository.interface";
 import { UserService } from "../../user/services/User.service";
 import { GithubAccessService } from "../../auth/services/GithubAccess.service";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
+import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 
 interface IGithubService {
   fetchRepositories(ownerId: string): Promise<IGithubRepository[]>;
+  startGithubHandover(applicantId: string): Promise<void>;
 }
 
 @Injectable()
@@ -12,6 +16,8 @@ export class GithubService implements IGithubService {
   constructor(
     private readonly userService: UserService,
     private readonly githubAccessService: GithubAccessService,
+    private readonly transferSessionSevice: TransferSessionService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async fetchRepositories(ownerId: string): Promise<IGithubRepository[]> {
@@ -43,5 +49,43 @@ export class GithubService implements IGithubService {
     }
 
     return repositories;
+  }
+
+  @OnEvent("application.accepted")
+  async startGithubHandover(transferSessionId: string): Promise<void> {
+    const transferSession = await this.transferSessionSevice.findById(
+      transferSessionId,
+      { project: { owner: { githubAccessToken: true } }, applicant: true },
+    );
+
+    const accessToken =
+      transferSession.project.owner.githubAccessToken.githubAccessToken;
+    const ownerGithub = transferSession.project.owner.login;
+    const githubRepo = transferSession.project.repositoryName;
+    const newOwner = transferSession.applicant.login;
+
+    const res = await fetch(
+      `https://api.github.com/repos/${ownerGithub}/${githubRepo}/transfer`,
+      {
+        method: "POST",
+        body: JSON.stringify({ new_owner: newOwner }),
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${accessToken}`,
+          "X-Github-Api-Version": "2026-03-10",
+        },
+      },
+    );
+
+    const project = transferSession.project;
+    project.status = ProjectStatusEnum.DRAFT;
+
+    if (!res.ok) {
+      this.eventEmitter.emit("transfer.failed", { transferSessionId });
+
+      throw new Error(`Github API error: ${res.status}`);
+    } else {
+      this.eventEmitter.emit("transfer.success", { transferSessionId });
+    }
   }
 }
