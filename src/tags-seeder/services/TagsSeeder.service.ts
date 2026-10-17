@@ -21,7 +21,7 @@ const DEFAULT_TAGS = [
   "Flask",
   "DJango",
   "Docker",
-  "Nest.js",
+  "NestJS",
 ];
 
 @Injectable()

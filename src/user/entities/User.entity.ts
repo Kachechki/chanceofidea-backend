@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { ProjectEntity } from "../../project/entities/Project.entity";
 import { GithubAccessEntity } from "../../auth/entities/GithubAccess.entity";
+import { ApplicationEntity } from "../../application/entities/Application.entity";
 
 @Entity()
 export class UserEntity {
@@ -42,4 +43,7 @@ export class UserEntity {
     cascade: true,
   })
   githubAccessToken: GithubAccessEntity;
+
+  @OneToMany(() => ApplicationEntity, (applications) => applications.applicant)
+  applications: ApplicationEntity[];
 }
