@@ -8,6 +8,7 @@ interface ITagService {
   create(data: ICreateCategoryOrTag): Promise<string>;
   findById(id: string): Promise<TagEntity>;
   findBySlug(slug: string): Promise<TagEntity>;
+  findAll(): Promise<TagEntity[]>;
 }
 
 export class TagService implements ITagService {
@@ -37,5 +38,9 @@ export class TagService implements ITagService {
     if (!tag) throw new NotFoundException("Tag not found");
 
     return tag;
+  }
+
+  async findAll(): Promise<TagEntity[]> {
+    return await this.repository.find();
   }
 }

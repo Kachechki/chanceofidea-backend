@@ -12,6 +12,7 @@ interface ICategoryService {
   create(data: ICreateCategoryOrTag): Promise<string>;
   findById(id: string): Promise<CategoryEntity>;
   findBySlug(slug: string): Promise<CategoryEntity>;
+  findAll(): Promise<CategoryEntity[]>;
 }
 
 @Injectable()
@@ -46,6 +47,10 @@ export class CategoryService implements ICategoryService {
     const category = await this.repository.findOneBy({ slug });
     if (!category) throw new NotFoundException("Category not foud");
 
-    return category
+    return category;
+  }
+
+  async findAll(): Promise<CategoryEntity[]> {
+    return await this.repository.find();
   }
 }
