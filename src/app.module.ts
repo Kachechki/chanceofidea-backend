@@ -19,18 +19,12 @@ import { CategoriesSeederModule } from "./categories-seeder/categories-seeder.mo
 import { TagsSeederModule } from "./tags-seeder/tags-seeder.module";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { ApplicationModule } from './application/application.module';
+import { ApplicationEntity } from "./application/entities/Application.entity";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
-    // ObserveModule.forRoot({
-    //   appKey: "YOUR_APP_KEY",
-    //   appSecret: "YOUR_APP_SECRET",
-    //   serviceId: "backend",
-    // }), // Maybe we'll put it later for something like graphana
     TypeOrmModule.forRoot({
       type: "postgres",
       host: process.env.DB_HOST ?? "db",
@@ -44,6 +38,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
         CategoryEntity,
         TagEntity,
         GithubAccessEntity,
+        ApplicationEntity
       ],
       synchronize: false,
       migrations: [__dirname + "/migrations/*{.js,.ts}"],
