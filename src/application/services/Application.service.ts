@@ -13,7 +13,6 @@ import { DataSource } from "typeorm/browser";
 import { ProjectEntity } from "../../project/entities/Project.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { TransferSessionEntity } from "../../transfer-session/entities/TransferSession.entity";
-import { UserEntity } from "../../user/entities/User.entity";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 
 interface IApplicationService {
@@ -23,7 +22,7 @@ interface IApplicationService {
     relations?: FindOptionsRelations<ApplicationEntity>,
   ): Promise<ApplicationEntity>;
   accept(id: string): Promise<void>;
-  reject(id: string): Promise<void>;
+  reject(id: string, reason: string): Promise<void>;
 }
 
 @Injectable()
@@ -93,10 +92,11 @@ export class ApplicationService implements IApplicationService {
     return application;
   }
 
-  async reject(id: string): Promise<void> {
+  async reject(id: string, reason: string): Promise<void> {
     const application = await this.findById(id);
 
     application.status = ApplicationStatusEnum.REJECTED;
+    application.rejectReason = reason;
 
     await this.repository.save(application);
   }

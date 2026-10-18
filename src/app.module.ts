@@ -21,7 +21,8 @@ import { ThrottlerModule } from "@nestjs/throttler";
 import { ApplicationModule } from "./application/application.module";
 import { ApplicationEntity } from "./application/entities/Application.entity";
 import { EventEmitterModule } from "@nestjs/event-emitter";
-import { TransferSessionModule } from './transfer-session/transfer-session.module';
+import { TransferSessionModule } from "./transfer-session/transfer-session.module";
+import { TransferSessionEntity } from "./transfer-session/entities/TransferSession.entity";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -41,6 +42,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
         TagEntity,
         GithubAccessEntity,
         ApplicationEntity,
+        TransferSessionEntity,
       ],
       synchronize: false,
       migrations: [__dirname + "/migrations/*{.js,.ts}"],

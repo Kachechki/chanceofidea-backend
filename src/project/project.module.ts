@@ -7,6 +7,7 @@ import { CategoryModule } from "../category/category.module";
 import { TagModule } from "../tag/tag.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
+import { TransferSessionModule } from "../transfer-session/transfer-session.module";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserModule } from "../user/user.module";
     TagModule,
     AuthModule,
     UserModule,
+    TransferSessionModule,
   ],
   controllers: [ProjectController],
   providers: [ProjectService],

@@ -6,6 +6,7 @@ import { CategoryEntity } from "../category/entities/Category.entity";
 import { TagEntity } from "../tag/entities/Tag.entity";
 import { GithubAccessEntity } from "../auth/entities/GithubAccess.entity";
 import { ApplicationEntity } from "../application/entities/Application.entity";
+import { TransferSessionEntity } from "../transfer-session/entities/TransferSession.entity";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ export const AppDataSource = new DataSource({
     TagEntity,
     GithubAccessEntity,
     ApplicationEntity,
+    TransferSessionEntity,
   ],
   synchronize: false,
   migrations: [__dirname + "/migrations/*{.js,.ts}"],
