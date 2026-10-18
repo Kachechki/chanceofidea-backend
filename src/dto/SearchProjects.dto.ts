@@ -1,6 +1,6 @@
 import { IsOptional, IsString } from "class-validator";
 
-export class FetchFilteredProjects {
+export class SearchProjectsDto {
   @IsOptional()
   @IsString({ each: true })
   categorySlugs: string[] | string;
@@ -8,4 +8,8 @@ export class FetchFilteredProjects {
   @IsOptional()
   @IsString({ each: true })
   tagSlugs: string[] | string;
+
+  @IsOptional()
+  @IsString()
+  searchQuery: string;
 }
