@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsInt, IsOptional, IsString } from "class-validator";
 
 export class SearchProjectsDto {
   @IsOptional()
@@ -12,4 +12,9 @@ export class SearchProjectsDto {
   @IsOptional()
   @IsString()
   searchQuery: string;
+}
+
+export class SearchProjectsPageDto {
+  @IsInt()
+  page: number;
 }

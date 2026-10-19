@@ -17,7 +17,7 @@ import { AuthGuard } from "../auth/guards/Auth.guard";
 import { ProjectGuard } from "./guards/Project.guard";
 import { UpdateProjectDto } from "../dto/UpdateProject.dto";
 import { ProjectIdDto } from "../dto/GetDeleteProject.dto";
-import { SearchProjectsDto } from "../dto/SearchProjects.dto";
+import { SearchProjectsDto, SearchProjectsPageDto } from "../dto/SearchProjects.dto";
 
 @Controller("project")
 export class ProjectController {
@@ -65,11 +65,11 @@ export class ProjectController {
   @Get("projects/:page")
   async search(
     @Query() dto: SearchProjectsDto,
-    @Param("page") page: number,
+    @Param() pageDto: SearchProjectsPageDto,
   ) {
     return await this.projectService.search({
       ...dto,
-      page,
+      ...pageDto,
     });
   }
 }
