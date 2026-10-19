@@ -20,5 +20,6 @@ import { TransferSessionModule } from "../transfer-session/transfer-session.modu
   ],
   controllers: [ProjectController],
   providers: [ProjectService],
+  exports: [ProjectService],
 })
 export class ProjectModule {}

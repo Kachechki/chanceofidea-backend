@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { Repository } from "typeorm";
+import { FindOptionsRelations, Repository } from "typeorm";
 import { UserEntity } from "../entities/User.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ISaveUser } from "../../types/SaveUser.interface";
 
 interface IUserService {
   save(data: ISaveUser): Promise<string>;
-  findById(id: string): Promise<UserEntity>;
+  findById(
+    id: string,
+    relations?: FindOptionsRelations<UserEntity>,
+  ): Promise<UserEntity>;
 }
 
 @Injectable()
@@ -32,8 +35,11 @@ export class UserService implements IUserService {
     ).id;
   }
 
-  async findById(id: string): Promise<UserEntity> {
-    const user = await this.repository.findOneBy({ id });
+  async findById(
+    id: string,
+    relations?: FindOptionsRelations<UserEntity>,
+  ): Promise<UserEntity> {
+    const user = await this.repository.findOne({ where: { id }, relations });
     if (!user) throw new NotFoundException("User not found");
 
     return user;

@@ -1,6 +1,6 @@
 export interface ICreateApplication {
   projectId: string;
   whyMe: string;
-  plan: string;
+  plan?: string;
   portfolioUrl?: string;
 }

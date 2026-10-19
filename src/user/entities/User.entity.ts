@@ -35,7 +35,7 @@ export class UserEntity {
     onDelete: "CASCADE",
     cascade: true,
   })
-  projects: ProjectEntity;
+  projects: ProjectEntity[];
 
   @JoinColumn()
   @OneToOne(() => GithubAccessEntity, (gae) => gae.user, {
