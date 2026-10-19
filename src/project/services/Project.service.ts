@@ -26,7 +26,10 @@ interface IProjectSerice {
   delete(id: string): Promise<void>;
   publish(id: string): Promise<void>;
   search(data: ISearchProjects): Promise<ProjectEntity[]>;
-  handleTransferFailed(transferSessionId: string): Promise<void>;
+  handleTransferTerminated(
+    transferSessionId: string,
+    failed: boolean,
+  ): Promise<void>;
   handleTransferSuccess(transferSessionId: string): Promise<void>;
 }
 
@@ -217,8 +220,11 @@ export class ProjectService implements IProjectSerice {
     return projects;
   }
 
-  @OnEvent("transfer.failed")
-  async handleTransferFailed(transferSessionId: string): Promise<void> {
+  @OnEvent("transfer.terminated")
+  async handleTransferTerminated(
+    transferSessionId: string,
+    failed: boolean,
+  ): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
       transferSessionId,
       {
@@ -227,7 +233,8 @@ export class ProjectService implements IProjectSerice {
     );
     const project = transferSession.project;
 
-    project.status = ProjectStatusEnum.ADOPTED;
+    if (failed) project.status = ProjectStatusEnum.DRAFT;
+    else project.status = ProjectStatusEnum.PUBLISHED;
 
     await this.repository.save(project);
   }
@@ -242,7 +249,7 @@ export class ProjectService implements IProjectSerice {
     );
     const project = transferSession.project;
 
-    project.status = ProjectStatusEnum.DRAFT;
+    project.status = ProjectStatusEnum.ADOPTED;
 
     await this.repository.save(project);
   }

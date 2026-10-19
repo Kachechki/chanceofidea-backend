@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { GithubController } from "./github.controller";
 import { UserModule } from "../user/user.module";
 import { AuthModule } from "../auth/auth.module";
@@ -6,8 +6,9 @@ import { GithubService } from "./services/Github.service";
 import { TransferSessionModule } from "../transfer-session/transfer-session.module";
 
 @Module({
-  imports: [UserModule, AuthModule, TransferSessionModule],
+  imports: [UserModule, AuthModule, forwardRef(() => TransferSessionModule)],
   controllers: [GithubController],
   providers: [GithubService],
+  exports: [GithubService],
 })
 export class GithubModule {}

@@ -1,14 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { IGithubRepository } from "../../types/GithubRepository.interface";
 import { UserService } from "../../user/services/User.service";
 import { GithubAccessService } from "../../auth/services/GithubAccess.service";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
+import { IValidateRepositroy } from "../../types/ValidateRepository.interace";
 
 interface IGithubService {
   fetchRepositories(ownerId: string): Promise<IGithubRepository[]>;
   startGithubHandover(applicantId: string): Promise<void>;
+  validateRepositry(data: IValidateRepositroy): Promise<boolean>;
 }
 
 @Injectable()
@@ -16,7 +18,8 @@ export class GithubService implements IGithubService {
   constructor(
     private readonly userService: UserService,
     private readonly githubAccessService: GithubAccessService,
-    private readonly transferSessionSevice: TransferSessionService,
+    @Inject(forwardRef(() => TransferSessionService))
+    private readonly transferSessionService: TransferSessionService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -53,7 +56,7 @@ export class GithubService implements IGithubService {
 
   @OnEvent("application.accepted")
   async startGithubHandover(transferSessionId: string): Promise<void> {
-    const transferSession = await this.transferSessionSevice.findById(
+    const transferSession = await this.transferSessionService.findById(
       transferSessionId,
       { project: { owner: { githubAccessToken: true } }, applicant: true },
     );
@@ -81,11 +84,20 @@ export class GithubService implements IGithubService {
     project.status = ProjectStatusEnum.DRAFT;
 
     if (!res.ok) {
-      this.eventEmitter.emit("transfer.failed", { transferSessionId });
+      this.eventEmitter.emit("transfer.termiated", {
+        transferSessionId,
+        failed: true,
+      });
 
       throw new Error(`Github API error: ${res.status}`);
-    } else {
-      this.eventEmitter.emit("transfer.success", { transferSessionId });
     }
+  }
+
+  async validateRepositry(data: IValidateRepositroy): Promise<boolean> {
+    const res = await fetch(
+      `https://api.github.com/repos/${data.ownerLogin}/${data.repositoryName}`,
+    );
+
+    return res.ok;
   }
 }
