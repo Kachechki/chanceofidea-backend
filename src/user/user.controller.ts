@@ -10,7 +10,9 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Get("me")
   async me(@Req() req: IRequestWithRefresh) {
-    const user = await this.userService.findById(req.user.id);
+    const user = await this.userService.findById(req.user.id, {
+      projects: true,
+    });
 
     return {
       id: user.id,
