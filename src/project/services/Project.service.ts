@@ -243,7 +243,7 @@ export class ProjectService implements IProjectSerice {
     await this.repository.save(project);
   }
 
-  @OnEvent("transfer.success")
+  @OnEvent("transfer.finished")
   async handleTransferSuccess(transferSessionId: string): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
       transferSessionId,

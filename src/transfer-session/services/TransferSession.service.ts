@@ -55,6 +55,7 @@ export class TransferSessionService implements ITransferSessionService {
     await this.repository.save({
       id: data.id,
       status: data.status,
+      createdAt: data.createdAt
     });
   }
 
@@ -71,7 +72,7 @@ export class TransferSessionService implements ITransferSessionService {
     await this.repository.save(transferSession);
   }
 
-  @OnEvent("transfer.success")
+  @OnEvent("transfer.finished")
   async handleTransferSuccess(transferSessionId: string): Promise<void> {
     const transferSession = await this.findById(transferSessionId);
 

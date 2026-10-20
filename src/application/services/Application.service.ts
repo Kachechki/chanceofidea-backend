@@ -161,6 +161,7 @@ export class ApplicationService implements IApplicationService {
         const transferSession = await transferSessionRepository.save({
           applicant: application.applicant,
           project,
+          createdAt: new Date(),
         });
 
         return transferSession.id;

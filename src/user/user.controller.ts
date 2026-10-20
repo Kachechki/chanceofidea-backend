@@ -20,6 +20,7 @@ export class UserController {
       login: user.login,
       createdAt: user.createdAt,
       avatarUrl: user.avatarUrl,
+      projects: user.projects,
     };
   }
 }

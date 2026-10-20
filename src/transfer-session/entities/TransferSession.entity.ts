@@ -28,4 +28,7 @@ export class TransferSessionEntity {
     default: TransferSessionStatusEnum.ACTIVE,
   })
   status: TransferSessionStatusEnum;
+
+  @Column({ type: "timestamptz" })
+  createdAt: Date;
 }

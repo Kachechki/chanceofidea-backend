@@ -3,4 +3,5 @@ import { TransferSessionStatusEnum } from "../enums/TransferSessionStatusEnum.st
 export interface IUpdateTransferSession {
   id: string;
   status: TransferSessionStatusEnum;
+  createdAt?: Date;
 }
