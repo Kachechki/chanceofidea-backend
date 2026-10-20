@@ -46,7 +46,7 @@ export class JwtTokenService implements IJwtTokenService {
         secret: this.accessSecret,
       });
     } catch {
-      throw new UnauthorizedException("Token has been expiredor revoked.");
+      throw new UnauthorizedException("Token has been expired or revoked.");
     }
   }
 

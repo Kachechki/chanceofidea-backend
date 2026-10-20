@@ -37,11 +37,13 @@ export class EncryptionService {
 
   decrypt(encrypted: string): string {
     try {
-      const [ivPart, tagPart, ciphertextPart] = encrypted.split(".");
+      const parts = encrypted.split(".");
 
-      if (!ivPart || !tagPart || !ciphertextPart) {
+      if (parts.length !== 3 || !parts[0] || !parts[1]) {
         throw new Error("Invalid encrypted data");
       }
+
+      const [ivPart, tagPart, ciphertextPart] = parts;
 
       const decipher = createDecipheriv(
         "aes-256-gcm",
