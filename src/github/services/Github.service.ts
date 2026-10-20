@@ -143,7 +143,6 @@ This document was generated automatically upon confirmation of the successful re
 
 **Issuing Platform:** Chance of Idea  
 **Record Type:** Repository Ownership Transfer  
-**Reference ID:** ${transferSession.id}
 `;
 
     const res = await fetch(
