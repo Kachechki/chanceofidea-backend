@@ -35,7 +35,7 @@ export class ApplicationEntity {
   status: ApplicationStatusEnum;
 
   @Column({ nullable: true })
-  rejectReason: string;
+  rejectReason?: string;
 
   @Column({ type: "timestamptz" })
   createdAt: Date;

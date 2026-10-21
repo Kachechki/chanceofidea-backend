@@ -13,7 +13,6 @@ import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 import { CategoryEntity } from "../../category/entities/Category.entity";
 import { TagEntity } from "../../tag/entities/Tag.entity";
 import { ApplicationEntity } from "../../application/entities/Application.entity";
-import { ApplicationStatusEnum } from "../../enums/ApplicationStatus.enum";
 
 @Entity()
 export class ProjectEntity {

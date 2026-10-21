@@ -1,7 +1,8 @@
-import { IsOptional, IsUUID } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsUUID } from "class-validator";
 
 export class ProjectIdDto {
-  @IsOptional()
+  @ApiProperty()
   @IsUUID()
   id: string;
 }

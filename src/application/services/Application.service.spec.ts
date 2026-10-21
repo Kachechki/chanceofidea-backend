@@ -404,7 +404,7 @@ describe("ApplicationService", () => {
       transactionApplicationRepository.exists.mockResolvedValue(true);
 
       await expect(service.accept(applicationId)).rejects.toThrow(
-        new ConflictException("One of application is already accepted"),
+        new ConflictException("One of the applications is already accepted"),
       );
 
       expect(transactionApplicationRepository.findOne).not.toHaveBeenCalled();

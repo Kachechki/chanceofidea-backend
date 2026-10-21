@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -10,6 +12,18 @@ import {
   Req,
   UseGuards,
 } from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
+
 import { ProjectService } from "./services/Project.service";
 import { CreateProjectDto } from "../dto/CreateProject.dto";
 import { type IRequestWithRefresh } from "../types/RequestWithRefresh.interface";
@@ -17,15 +31,34 @@ import { AuthGuard } from "../auth/guards/Auth.guard";
 import { ProjectGuard } from "./guards/Project.guard";
 import { UpdateProjectDto } from "../dto/UpdateProject.dto";
 import { ProjectIdDto } from "../dto/GetDeleteProject.dto";
-import { SearchProjectsDto, SearchProjectsPageDto } from "../dto/SearchProjects.dto";
+import {
+  SearchProjectsDto,
+  SearchProjectsPageDto,
+} from "../dto/SearchProjects.dto";
+import { ProjectDto } from "../dto/ProjectDto";
 
+@ApiTags("Projects")
+@ApiBearerAuth()
 @Controller("project")
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @UseGuards(AuthGuard)
   @Post()
-  async create(@Body() dto: CreateProjectDto, @Req() req: IRequestWithRefresh) {
+  @ApiOperation({ summary: "Create a project" })
+  @ApiCreatedResponse({
+    description: "Project created successfully",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @ApiBadRequestResponse({
+    description: "Invalid project data",
+  })
+  async create(
+    @Body() dto: CreateProjectDto,
+    @Req() req: IRequestWithRefresh,
+  ): Promise<void> {
     await this.projectService.create({
       ...dto,
       ownerId: req.user.id,
@@ -34,8 +67,19 @@ export class ProjectController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async get(@Query() dto: ProjectIdDto) {
-    return await this.projectService.findById(dto.id, {
+  @ApiOperation({ summary: "Get a project by ID" })
+  @ApiOkResponse({
+    description: "Project retrieved successfully",
+    type: ProjectDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @ApiNotFoundResponse({
+    description: "Project not found",
+  })
+  async get(@Query() dto: ProjectIdDto): Promise<ProjectDto> {
+    return this.projectService.findById(dto.id, {
       applications: true,
       category: true,
       owner: true,
@@ -45,29 +89,78 @@ export class ProjectController {
 
   @UseGuards(AuthGuard, ProjectGuard)
   @Patch()
-  async update(@Body() dto: UpdateProjectDto) {
+  @ApiOperation({ summary: "Update a project" })
+  @ApiOkResponse({
+    description: "Project updated successfully",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @ApiNotFoundResponse({
+    description: "Project not found",
+  })
+  @ApiBadRequestResponse({
+    description: "Invalid project data",
+  })
+  async update(@Body() dto: UpdateProjectDto): Promise<void> {
     await this.projectService.update(dto);
   }
 
   @UseGuards(AuthGuard, ProjectGuard)
   @Delete()
-  async delete(@Query() dto: ProjectIdDto) {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Delete a project" })
+  @ApiNoContentResponse({
+    description: "Project deleted successfully",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @ApiNotFoundResponse({
+    description: "Project not found",
+  })
+  async delete(@Query() dto: ProjectIdDto): Promise<void> {
     await this.projectService.delete(dto.id);
   }
 
   @UseGuards(AuthGuard, ProjectGuard)
   @Post("publish")
-  async publish(@Query() dto: ProjectIdDto) {
+  @ApiOperation({ summary: "Publish a project" })
+  @ApiOkResponse({
+    description: "Project published successfully",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @ApiNotFoundResponse({
+    description: "Project not found",
+  })
+  @ApiBadRequestResponse({
+    description: "Project cannot be published",
+  })
+  async publish(@Query() dto: ProjectIdDto): Promise<void> {
     await this.projectService.publish(dto.id);
   }
 
   @UseGuards(AuthGuard)
-  @Get("projects/:page")
+  @Get("projects")
+  @ApiOperation({ summary: "Search projects with pagination and filters" })
+  @ApiOkResponse({
+    description: "Projects matching the search criteria",
+    type: ProjectDto,
+    isArray: true,
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @ApiBadRequestResponse({
+    description: "Invalid search parameters",
+  })
   async search(
     @Query() dto: SearchProjectsDto,
     @Param() pageDto: SearchProjectsPageDto,
   ) {
-    return await this.projectService.search({
+    return this.projectService.search({
       ...dto,
       ...pageDto,
     });

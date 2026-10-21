@@ -1,12 +1,13 @@
-
 import { Test, TestingModule } from "@nestjs/testing";
 import { ApplicationController } from "./application.controller";
 import { ApplicationService } from "./services/Application.service";
 import { AuthGuard } from "../auth/guards/Auth.guard";
 import { ProjectGuard } from "../project/guards/Project.guard";
+import { ApplicationStatusEnum } from "../enums/ApplicationStatus.enum";
 
 describe("ApplicationController", () => {
   let controller: ApplicationController;
+
   let applicationService: {
     create: jest.Mock;
     accept: jest.Mock;
@@ -14,6 +15,37 @@ describe("ApplicationController", () => {
     findIncoming: jest.Mock;
     findOutcoming: jest.Mock;
   };
+
+  const userId = "user-123";
+  const applicationId = "application-123";
+  const projectId = "project-123";
+  const createdAt = new Date("2026-10-20T10:00:00.000Z");
+  const updatedAt = new Date("2026-10-21T12:00:00.000Z");
+
+  const applicant = {
+    id: userId,
+    bio: "Backend developer",
+    avatarUrl: "https://github.com/avatar.png",
+    createdAt,
+    login: "example-user",
+  };
+
+  const createApplicationEntity = (overrides = {}) => ({
+    id: applicationId,
+    applicant,
+    project: {
+      id: projectId,
+      title: "Chance of Idea",
+    },
+    createdAt,
+    updatedAt,
+    status: ApplicationStatusEnum.PENDING,
+    whyMe: "I have relevant experience",
+    plan: "I will implement the missing features",
+    portflioUrl: "https://github.com/example",
+    rejectReason: null,
+    ...overrides,
+  });
 
   beforeEach(async () => {
     applicationService = {
@@ -49,11 +81,11 @@ describe("ApplicationController", () => {
   describe("create", () => {
     it("should create an application with the request user's ID", async () => {
       const req = {
-        user: { id: "user-123" },
+        user: { id: userId },
       } as any;
 
       const dto = {
-        projectId: "project-123",
+        projectId,
         whyMe: "I have relevant experience",
         plan: "I will implement the missing features",
         porfolioUrl: "https://github.com/example",
@@ -68,73 +100,121 @@ describe("ApplicationController", () => {
           plan: dto.plan,
           portfolioUrl: dto.porfolioUrl,
         },
-        "user-123",
+        userId,
       );
+
       expect(applicationService.create).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("accept", () => {
     it("should accept the specified application", async () => {
-      await controller.accept({
-        applicationId: "application-123",
-      });
+      await controller.accept({ applicationId });
 
-      expect(applicationService.accept).toHaveBeenCalledWith(
-        "application-123",
-      );
+      expect(applicationService.accept).toHaveBeenCalledWith(applicationId);
       expect(applicationService.accept).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("reject", () => {
     it("should reject the specified application with a reason", async () => {
-      await controller.reject(
-        { applicationId: "application-123" },
-        { rejectReason: "The application does not meet the requirements" },
-      );
+      const rejectReason = "The application does not meet the requirements";
+
+      await controller.reject({ applicationId }, { rejectReason });
 
       expect(applicationService.reject).toHaveBeenCalledWith(
-        "application-123",
-        "The application does not meet the requirements",
+        applicationId,
+        rejectReason,
       );
+
       expect(applicationService.reject).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("getIncoming", () => {
-    it("should return incoming applications for the request user", async () => {
+    it("should map incoming application entities to response DTOs", async () => {
       const req = {
-        user: { id: "user-123" },
+        user: { id: userId },
       } as any;
 
-      const applications = [{ id: "application-1" }];
-      applicationService.findIncoming.mockResolvedValue(applications);
+      const entity = createApplicationEntity();
 
-      await expect(controller.getIncoming(req)).resolves.toBe(applications);
+      applicationService.findIncoming.mockResolvedValue([entity]);
 
-      expect(applicationService.findIncoming).toHaveBeenCalledWith(
-        "user-123",
-      );
+      await expect(controller.getIncoming(req)).resolves.toEqual([
+        {
+          id: applicationId,
+          applicant,
+          createdAt,
+          status: ApplicationStatusEnum.PENDING,
+          updatedAt,
+          whyMe: "I have relevant experience",
+          plan: "I will implement the missing features",
+          portfolioUrl: "https://github.com/example",
+          rejectReason: null,
+        },
+      ]);
+
+      expect(applicationService.findIncoming).toHaveBeenCalledWith(userId);
       expect(applicationService.findIncoming).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return an empty array when there are no incoming applications", async () => {
+      const req = {
+        user: { id: userId },
+      } as any;
+
+      applicationService.findIncoming.mockResolvedValue([]);
+
+      await expect(controller.getIncoming(req)).resolves.toEqual([]);
+
+      expect(applicationService.findIncoming).toHaveBeenCalledWith(userId);
     });
   });
 
   describe("getOutcoming", () => {
-    it("should return outgoing applications for the request user", async () => {
+    it("should map outgoing application entities to response DTOs", async () => {
       const req = {
-        user: { id: "user-123" },
+        user: { id: userId },
       } as any;
 
-      const applications = [{ id: "application-2" }];
-      applicationService.findOutcoming.mockResolvedValue(applications);
+      const entity = createApplicationEntity({
+        id: "application-456",
+        whyMe: "I can finish this project",
+        plan: "Refactor the backend and add tests",
+        portflioUrl: "https://github.com/example/portfolio",
+      });
 
-      await expect(controller.getOutcoming(req)).resolves.toBe(applications);
+      applicationService.findOutcoming.mockResolvedValue([entity]);
 
-      expect(applicationService.findOutcoming).toHaveBeenCalledWith(
-        "user-123",
-      );
+      await expect(controller.getOutcoming(req)).resolves.toEqual([
+        {
+          id: "application-456",
+          applicant,
+          createdAt,
+          status: ApplicationStatusEnum.PENDING,
+          updatedAt,
+          whyMe: "I can finish this project",
+          plan: "Refactor the backend and add tests",
+          portfolioUrl: "https://github.com/example/portfolio",
+          rejectReason: null,
+        },
+      ]);
+
+      expect(applicationService.findOutcoming).toHaveBeenCalledWith(userId);
       expect(applicationService.findOutcoming).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return an empty array when there are no outgoing applications", async () => {
+      const req = {
+        user: { id: userId },
+      } as any;
+
+      applicationService.findOutcoming.mockResolvedValue([]);
+
+      await expect(controller.getOutcoming(req)).resolves.toEqual([]);
+
+      expect(applicationService.findOutcoming).toHaveBeenCalledWith(userId);
     });
   });
 });

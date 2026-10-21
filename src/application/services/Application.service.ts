@@ -134,7 +134,7 @@ export class ApplicationService implements IApplicationService {
         });
 
         if (acceptedApplicationExists)
-          throw new ConflictException("One of application is already accepted");
+          throw new ConflictException("One of the applications is already accepted");
 
         const application = await repository.findOne({
           where: { id },
