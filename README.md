@@ -1,114 +1,159 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Chance of Idea — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Chance of Idea is a marketplace for unfinished projects. This repository contains
+the REST API used to publish projects, browse and filter listings, apply to take
+over a project, and coordinate repository transfers. Users authenticate with
+GitHub.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The API is built with NestJS and TypeScript, and uses PostgreSQL for persistence.
 
-## Description
+## Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- GitHub OAuth authentication and JWT-protected endpoints
+- Project creation, editing, publishing, search, and deletion
+- Categories and tags for organizing project listings
+- Applications to take over projects, including acceptance and rejection
+- GitHub repository lookup and transfer-session confirmations
+- Interactive API reference at `/docs`
 
-## Project setup
+## Requirements
 
-```bash
-$ npm install
-```
+- Node.js 20 or later and npm
+- PostgreSQL 17 (or Docker and Docker Compose)
+- A GitHub OAuth App
 
-## Compile and run the project
+## Configuration
 
-```bash
-# development
-$ npm run start
+Create a `.env` file in the repository root. The following variables are used by
+the application:
 
-# watch mode
-$ npm run start:dev
+| Variable | Description |
+| --- | --- |
+| `PORT` | HTTP port for the API (defaults to `3000`) |
+| `DB_HOST` | PostgreSQL hostname (`localhost` for a local database, `db` in Docker Compose) |
+| `DB_PORT` | PostgreSQL port (normally `5432`) |
+| `DB_USER` | PostgreSQL username |
+| `DB_PASSWORD` | PostgreSQL password |
+| `DB_NAME` | PostgreSQL database name |
+| `GITHUB_CLIENT_ID` | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret |
+| `GITHUB_TOKEN_ENCRYPTION_KEY` | Key used to encrypt stored GitHub access tokens |
+| `JWT_ACCESS_SECRET` | Secret used to sign access tokens |
+| `JWT_REFRESH_SECRET` | Secret used to sign refresh tokens |
 
-# production mode
-$ npm run start:prod
-```
+Use strong, unique secrets for the encryption key and JWT secrets. Do not commit
+`.env` or production secrets to source control.
 
-## Run tests
+Configure the GitHub OAuth App to use the callback URL for your environment. For
+a local server on the default port, the API callback route is
+`http://localhost:3000/auth/oauth_callback`.
 
-```bash
-# unit tests
-$ npm run test
+## Run locally
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Install dependencies:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm ci
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Start PostgreSQL and set `DB_HOST` to the address reachable from your local
+machine, typically `localhost`. Apply the database migrations:
 
-## Observability
+```bash
+npm run migration:run
+```
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+Start the API in watch mode:
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+```bash
+npm run start:dev
+```
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+The API listens on `http://localhost:3000` by default. If you set a different
+`PORT`, use that port instead. The interactive API reference is available at
+`http://localhost:3000/docs`.
 
-## Resources
+For a production build:
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npm run build
+npm run start:prod
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Run with Docker Compose
 
-## Support
+Configure the variables used by `docker-compose.yaml` in `.env`, including
+PostgreSQL credentials and `PORT`. The Compose service configures the backend to
+reach PostgreSQL at `db`.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Build the backend image and start PostgreSQL:
 
-## Stay in touch
+```bash
+docker compose build backend
+docker compose up -d db
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Once PostgreSQL is ready, apply migrations from the backend container:
+
+```bash
+docker compose run --rm --no-deps backend npm run migration:run
+```
+
+Then start the API:
+
+```bash
+docker compose up backend
+```
+
+The Compose file publishes the API and PostgreSQL ports configured in `.env`.
+
+## API overview
+
+The full request and response schemas are documented in the interactive
+reference at `/docs`. The main routes are:
+
+| Area | Routes |
+| --- | --- |
+| Authentication | `GET /auth/oauth_callback` |
+| Users | `GET /user/me` |
+| Projects | `POST /project`, `GET /project`, `GET /project/projects`, `PATCH /project`, `DELETE /project`, `POST /project/publish` |
+| Applications | `POST /application`, `POST /application/accept`, `POST /application/reject`, `GET /application/incoming`, `GET /application/outcoming` |
+| Categories and tags | `GET /category`, `GET /tag` |
+| GitHub | `GET /github/repositories` |
+| Transfer sessions | `POST /transfer-session/i-have-recieved`, `POST /transfer-session/i-dont-want` |
+
+All routes except the OAuth callback require authentication. Project and
+application routes that modify a project also enforce project-owner permissions.
+
+## Database migrations
+
+Migrations are managed with TypeORM. Run pending migrations after configuring
+the database and before starting the API:
+
+```bash
+npm run migration:run
+```
+
+Other migration commands:
+
+```bash
+npm run migration:show
+npm run migration:revert
+npm run migration:generate
+```
+
+Review generated migrations before applying them. Automatic schema
+synchronization is disabled.
+
+## Tests and code quality
+
+```bash
+npm test
+npm run test:e2e
+npm run test:cov
+npm run lint
+```
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+See [LICENSE](./LICENSE).
