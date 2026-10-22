@@ -30,7 +30,8 @@ export class UserService implements IUserService {
         login: data.login,
         avatarUrl: data.avatarUrl,
         bio: data.bio ?? undefined,
-        createdAt: new Date(),
+        createdAt: existingUser ? new Date() : undefined,
+        updatedAt: new Date(),
       })
     ).id;
   }

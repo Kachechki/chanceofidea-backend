@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   OneToOne,
@@ -33,6 +34,6 @@ export class TransferSessionEntity {
   })
   status: TransferSessionStatusEnum;
 
-  @Column({ type: "timestamptz" })
+  @CreateDateColumn()
   createdAt: Date;
 }

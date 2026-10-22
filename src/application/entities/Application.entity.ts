@@ -1,9 +1,11 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { UserEntity } from "../../user/entities/User.entity";
 import { ProjectEntity } from "../../project/entities/Project.entity";
@@ -43,9 +45,9 @@ export class ApplicationEntity {
   @Column({ nullable: true })
   rejectReason?: string;
 
-  @Column({ type: "timestamptz" })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: "timestamptz" })
+  @UpdateDateColumn()
   updatedAt: Date;
 }
