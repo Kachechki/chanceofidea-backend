@@ -42,15 +42,13 @@ export class ProjectEntity {
 
   @JoinColumn()
   @ManyToOne(() => CategoryEntity, {
-    onDelete: "CASCADE",
-    cascade: true,
+    onDelete: "SET NULL",
   })
   category: CategoryEntity;
 
   @JoinTable()
   @ManyToMany(() => TagEntity, (tags) => tags.projects, {
-    onDelete: "CASCADE",
-    cascade: true,
+    onDelete: "SET NULL",
   })
   tags: TagEntity[];
 

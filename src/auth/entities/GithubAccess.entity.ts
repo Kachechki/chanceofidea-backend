@@ -3,9 +3,9 @@ import { UserEntity } from "../../user/entities/User.entity";
 
 @Entity()
 export class GithubAccessEntity {
-    @PrimaryColumn()
-    githubAccessToken: string;
+  @PrimaryColumn()
+  githubAccessToken: string;
 
-    @OneToOne(() => UserEntity, (user) => user.githubAccessToken)
-    user: UserEntity
+  @OneToOne(() => UserEntity, (user) => user.githubAccessToken)
+  user: UserEntity;
 }

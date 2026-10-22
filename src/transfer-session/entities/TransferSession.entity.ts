@@ -15,11 +15,15 @@ export class TransferSessionEntity {
   id: string;
 
   @JoinColumn()
-  @OneToOne(() => ProjectEntity)
+  @OneToOne(() => ProjectEntity, {
+    onDelete: "SET NULL",
+  })
   project: ProjectEntity;
 
   @JoinColumn()
-  @OneToOne(() => UserEntity)
+  @OneToOne(() => UserEntity, {
+    onDelete: "SET NULL",
+  })
   applicant: UserEntity;
 
   @Column({

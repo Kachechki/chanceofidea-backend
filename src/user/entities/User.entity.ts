@@ -32,8 +32,7 @@ export class UserEntity {
 
   @JoinColumn()
   @OneToMany(() => ProjectEntity, (project) => project.owner, {
-    onDelete: "CASCADE",
-    cascade: true,
+    onDelete: "SET NULL",
   })
   projects: ProjectEntity[];
 
@@ -44,6 +43,13 @@ export class UserEntity {
   })
   githubAccessToken: GithubAccessEntity;
 
-  @OneToMany(() => ApplicationEntity, (applications) => applications.applicant)
+  @OneToMany(
+    () => ApplicationEntity,
+    (applications) => applications.applicant,
+    {
+      onDelete: "CASCADE",
+      cascade: true,
+    },
+  )
   applications: ApplicationEntity[];
 }

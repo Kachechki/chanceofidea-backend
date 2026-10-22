@@ -14,11 +14,17 @@ export class ApplicationEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.applications)
+  @ManyToOne(() => UserEntity, (user) => user.applications, {
+    onDelete: "CASCADE",
+    cascade: true,
+  })
   @JoinColumn()
   applicant: UserEntity;
 
-  @ManyToOne(() => ProjectEntity, (project) => project.applications)
+  @ManyToOne(() => ProjectEntity, (project) => project.applications, {
+    onDelete: "CASCADE",
+    cascade: true,
+  })
   @JoinColumn()
   project: ProjectEntity;
 
@@ -26,10 +32,10 @@ export class ApplicationEntity {
   whyMe: string;
 
   @Column({ nullable: true })
-  plan: string;
+  plan?: string;
 
   @Column({ nullable: true })
-  portflioUrl: string;
+  portflioUrl?: string;
 
   @Column({ type: "enum", enum: ApplicationStatusEnum })
   status: ApplicationStatusEnum;
