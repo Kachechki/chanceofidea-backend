@@ -15,6 +15,7 @@ import { UserService } from "../../user/services/User.service";
 import { ISearchProjects } from "../../types/FindFilteredProjects.interface";
 import { OnEvent } from "@nestjs/event-emitter";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
+import { Octokit } from "octokit";
 
 interface IProjectSerice {
   create(data: ICreateProject): Promise<void>;
@@ -58,18 +59,37 @@ export class ProjectService implements IProjectSerice {
       tags.push(tagId);
     }
 
-    if (tags.length == 0)
+    if (tags.length === 0) {
       throw new BadRequestException("No project tags provided");
+    }
 
     const owner = await this.userService.findById(data.ownerId);
 
-    const res = await fetch(
-      `https://api.github.com/repos/${owner.login}/${data.repositoryName}`,
-    );
+    const octokit = new Octokit();
 
-    if (!res.ok) throw new Error(`Github API error: ${res.status}`);
+    let repository;
 
-    const repository = await res.json();
+    try {
+      const response = await octokit.rest.repos.get({
+        owner: owner.login,
+        repo: data.repositoryName,
+      });
+
+      repository = response.data;
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        throw new BadRequestException(
+          "GitHub repository not found or inaccessible",
+        );
+      }
+
+      throw error;
+    }
 
     await this.repository.save({
       ...data,
@@ -80,9 +100,10 @@ export class ProjectService implements IProjectSerice {
       status: data.publish
         ? ProjectStatusEnum.PUBLISHED
         : ProjectStatusEnum.DRAFT,
-      createdAt: new Date(),
       owner,
       repositoryName: repository.name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   }
 

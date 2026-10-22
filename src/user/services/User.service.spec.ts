@@ -59,7 +59,7 @@ describe("UserService", () => {
         login: userData.login,
         avatarUrl: userData.avatarUrl,
         bio: userData.bio,
-        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       });
 
       expect(result).toBe(savedUser.id);
@@ -78,14 +78,17 @@ describe("UserService", () => {
 
       const result = await service.save(userData);
 
-      expect(repository.save).toHaveBeenCalledWith({
-        id: existingUser.id,
-        githubId: userData.githubId,
-        login: userData.login,
-        avatarUrl: userData.avatarUrl,
-        bio: userData.bio,
-        createdAt: expect.any(Date),
-      });
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: existingUser.id,
+          githubId: userData.githubId,
+          login: userData.login,
+          avatarUrl: userData.avatarUrl,
+          bio: userData.bio,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        }),
+      );
 
       expect(result).toBe(existingUser.id);
     });

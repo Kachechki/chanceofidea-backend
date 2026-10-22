@@ -1,19 +1,17 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-} from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { Octokit } from "octokit";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+
 import { IGithubRepository } from "../../types/GithubRepository.interface";
+import { IValidateRepositroy } from "../../types/ValidateRepository.interace";
 import { UserService } from "../../user/services/User.service";
 import { GithubAccessService } from "../../auth/services/GithubAccess.service";
-import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
-import { IValidateRepositroy } from "../../types/ValidateRepository.interace";
 
 interface IGithubService {
   fetchRepositories(ownerId: string): Promise<IGithubRepository[]>;
-  startGithubHandover(applicantId: string): Promise<void>;
+  startGithubHandover(transferSessionId: string): Promise<void>;
   validateRepositry(data: IValidateRepositroy): Promise<boolean>;
   finishGithubHandover(transferSessionId: string): Promise<void>;
 }
@@ -28,90 +26,104 @@ export class GithubService implements IGithubService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  private createOctokit(accessToken: string): Octokit {
+    return new Octokit({
+      auth: accessToken,
+    });
+  }
+
   async fetchRepositories(ownerId: string): Promise<IGithubRepository[]> {
     const owner = await this.userService.findById(ownerId);
-    const githubAccessToken = await this.githubAccessService.get(owner);
+    const accessToken = await this.githubAccessService.get(owner);
+    const octokit = this.createOctokit(accessToken);
 
-    const repositories = [];
-
-    for (let page = 1; ; page++) {
-      const response = await fetch(
-        `https://api.github.com/user/repos?affiliation=owner&per_page=100&page=${page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${githubAccessToken}`,
-            Accept: "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2026-03-10",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
-      const batch = await response.json();
-      repositories.push(...batch);
-
-      if (batch.length < 100) break;
-    }
-
-    return repositories;
+    return octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
+      affiliation: "owner",
+      per_page: 100,
+    }) as Promise<IGithubRepository[]>;
   }
 
   @OnEvent("application.accepted")
   async startGithubHandover(transferSessionId: string): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
       transferSessionId,
-      { project: { owner: { githubAccessToken: true } }, applicant: true },
-    );
-
-    const accessToken =
-      transferSession.project.owner.githubAccessToken.githubAccessToken;
-    const ownerGithub = transferSession.project.owner.login;
-    const githubRepo = transferSession.project.repositoryName;
-    const newOwner = transferSession.applicant.login;
-
-    const res = await fetch(
-      `https://api.github.com/repos/${ownerGithub}/${githubRepo}/transfer`,
       {
-        method: "POST",
-        body: JSON.stringify({ new_owner: newOwner }),
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${accessToken}`,
-          "X-Github-Api-Version": "2026-03-10",
+        project: {
+          owner: {
+            githubAccessToken: true,
+          },
         },
+        applicant: true,
       },
     );
 
-    const project = transferSession.project;
-    project.status = ProjectStatusEnum.TRANSFERRING;
+    const owner = transferSession.project.owner;
+    const applicant = transferSession.applicant;
 
-    if (!res.ok) {
+    const accessToken = await this.githubAccessService.get(owner);
+
+    const octokit = this.createOctokit(accessToken);
+
+    try {
+      await octokit.rest.repos.transfer({
+        owner: owner.login,
+        repo: transferSession.project.repositoryName,
+        new_owner: applicant.login,
+      });
+
+      transferSession.project.status = ProjectStatusEnum.TRANSFERRING;
+    } catch (error) {
       this.eventEmitter.emit("transfer.termiated", {
         transferSessionId,
         failed: true,
       });
 
-      throw new Error(`Github API error: ${res.status}`);
+      throw error;
     }
   }
 
   async validateRepositry(data: IValidateRepositroy): Promise<boolean> {
-    const res = await fetch(
-      `https://api.github.com/repos/${data.ownerLogin}/${data.repositoryName}`,
-    );
+    const octokit = new Octokit();
 
-    return res.ok;
+    try {
+      await octokit.rest.repos.get({
+        owner: data.ownerLogin,
+        repo: data.repositoryName,
+      });
+
+      return true;
+    } catch (error: unknown) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        return false;
+      }
+
+      throw error;
+    }
   }
 
   @OnEvent("transfer.success")
   async finishGithubHandover(transferSessionId: string): Promise<void> {
-    const transferSession =
-      await this.transferSessionService.findById(transferSessionId);
+    const transferSession = await this.transferSessionService.findById(
+      transferSessionId,
+      {
+        project: {
+          owner: true,
+        },
+        applicant: {
+          githubAccessToken: true,
+        },
+      },
+    );
 
-    // create TRANSFER.md
+    const project = transferSession.project;
+    const previousOwner = project.owner;
+    const newOwner = transferSession.applicant;
+
     const text = `
 # Repository Transfer Record
 
@@ -119,50 +131,55 @@ This document serves as an official record of the repository transfer facilitate
 
 ## Transfer Details
 
-- **Project Title:** ${transferSession.project.title}
-- **Previous Owner:** @${transferSession.project.owner.login}
-- **New Owner:** @${transferSession.applicant.login}
+- **Project Title:** ${project.title}
+- **Previous Owner:** @${previousOwner.login}
+- **New Owner:** @${newOwner.login}
 - **Transfer Date:** ${transferSession.createdAt}
 - **Transfer Status:** Completed
 
 ## Transfer Statement
 
-The ownership of the repository identified above has been transferred from **${transferSession.project.owner.login}** to **${transferSession.applicant.login}** through the Chance of Idea platform.
+The ownership of the repository identified above has been transferred from **${previousOwner.login}** to **${newOwner.login}** through the Chance of Idea platform.
 
 The transfer process has been completed, and repository ownership is now assigned to the receiving party, subject to GitHub's applicable terms and conditions.
 
 ## Project Information
 
-- **Description:** ${transferSession.project.description}
-- **Readiness:** ${transferSession.project.readiness}
+- **Description:** ${project.description}
+- **Readiness:** ${project.readiness}
 
 ## Record of Completion
 
 This document was generated automatically upon confirmation of the successful repository transfer.
 
 **Issuing Platform:** Chance of Idea  
-**Record Type:** Repository Ownership Transfer  
+**Record Type:** Repository Ownership Transfer
 `;
 
-    const res = await fetch(
-      `https://api.github.com/repos/${transferSession.applicant.login}/${transferSession.project.repositoryName}/contents/TRANSFER.md`,
-      {
-        body: JSON.stringify({
-          message:
-            "Create TRANSFER.md after repository transfer (by Chance of Idea team)",
-          content: Buffer.from(text, "utf-8").toString("base64"),
-        }),
-      },
-    );
+    try {
+      const accessToken = await this.githubAccessService.get(newOwner);
 
-    if (!res.ok) {
+      const octokit = this.createOctokit(accessToken);
+
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner: newOwner.login,
+        repo: project.repositoryName,
+        path: "TRANSFER.md",
+        message:
+          "Create TRANSFER.md after repository transfer (by Chance of Idea team)",
+        content: Buffer.from(text, "utf8").toString("base64"),
+      });
+    } catch (error) {
       this.eventEmitter.emit("transfer.termiated", {
         transferSessionId,
         failed: true,
       });
+
       return;
     }
 
-    this.eventEmitter.emit("transfer.finished", { transferSessionId });
+    this.eventEmitter.emit("transfer.finished", {
+      transferSessionId,
+    });
   }
 }
