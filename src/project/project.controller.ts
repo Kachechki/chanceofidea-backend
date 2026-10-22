@@ -160,7 +160,7 @@ export class ProjectController {
     await this.projectService.publish(dto.id);
   }
 
-  @UseGuards(AuthGuard)
+  // @UseGuards(AuthGuard)
   @Get("projects")
   @ApiOperation({ summary: "Search projects with pagination and filters" })
   @ApiOkResponse({
