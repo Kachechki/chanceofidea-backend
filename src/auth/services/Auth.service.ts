@@ -8,6 +8,7 @@ import { GithubAccessService } from "./GithubAccess.service";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
+  refresh(refresh: string): Promise<IJwtPair>;
 }
 
 @Injectable()
@@ -63,5 +64,9 @@ export class AuthService implements IAuthService {
     await this.githubAccessService.save(tokenData.access_token, userId);
 
     return this.jwtService.sign({ id: userId });
+  }
+
+  async refresh(refresh: string): Promise<IJwtPair> {
+    return await this.jwtService.refresh(refresh);
   }
 }
