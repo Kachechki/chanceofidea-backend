@@ -36,7 +36,6 @@ import {
   SearchProjectsPageDto,
 } from "../dto/SearchProjects.dto";
 import { ProjectDto } from "../dto/ProjectDto";
-import { ProjectEntity } from "./entities/Project.entity";
 
 @ApiTags("Projects")
 @ApiBearerAuth()
@@ -87,23 +86,22 @@ export class ProjectController {
       tags: true,
     });
 
-      return {
-        id: project.id,
-        title: project.title,
-        category: project.category,
-        createdAt: project.createdAt,
-        description: project.description,
-        owner: {
-          id: project.owner.id,
-          avatarUrl: project.owner.avatarUrl,
-          bio: project.owner.bio,
-          createdAt: project.owner.createdAt,
-          login: project.owner.login,
-        },
-        repositoryName: project.repositoryName,
-        status: project.status,
-        tags: project.tags,
-      };
+    return {
+      id: project.id,
+      title: project.title,
+      category: project.category,
+      createdAt: project.createdAt,
+      description: project.description,
+      owner: {
+        id: project.owner.id,
+        avatarUrl: project.owner.avatarUrl,
+        bio: project.owner.bio,
+        createdAt: project.owner.createdAt,
+        login: project.owner.login,
+      },
+      repositoryName: project.repositoryName,
+      status: project.status,
+      tags: project.tags,
     };
   }
 
