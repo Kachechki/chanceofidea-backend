@@ -4,6 +4,9 @@ import { ValidationPipe } from "@nestjs/common";
 import cookieParser from "cookie-parser";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { apiReference } from "@scalar/nestjs-api-reference";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -49,6 +52,18 @@ async function bootstrap() {
       },
     }),
   );
+
+  app.useSecurityHeaders();
+  app.enableCors({
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+  });
+
+  if (!process.env.FRONTEND_URL)
+    throw new Error("no FRONTEND_URL specified in .env");
+
+  app.enableCsrfProtection({
+    trustedOrigins: [process.env.FRONTEND_URL],
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }
