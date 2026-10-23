@@ -36,11 +36,12 @@ describe("AuthController", () => {
       refresh: "refresh-token",
     };
 
-    let res: { set: jest.Mock };
+    let res: { set: jest.Mock; cookie: jest.Mock };
 
     beforeEach(() => {
       res = {
         set: jest.fn(),
+        cookie: jest.fn(),
       };
     });
 
@@ -53,16 +54,24 @@ describe("AuthController", () => {
       expect(authService.authenticate).toHaveBeenCalledWith(code);
     });
 
-    it("should set access and refresh tokens on the response", async () => {
+    it("should set the access token header and refresh token cookie", async () => {
       authService.authenticate.mockResolvedValue(jwtPair);
 
       await controller.oAuthCallback(code, res as any);
 
-      expect(res.set).toHaveBeenCalledTimes(1);
       expect(res.set).toHaveBeenCalledWith({
-        access: jwtPair.access,
-        refresh: jwtPair.refresh,
+        "x-access-token": jwtPair.access,
       });
+      expect(res.cookie).toHaveBeenCalledWith(
+        "refresh",
+        jwtPair.refresh,
+        expect.objectContaining({
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          path: "/",
+        }),
+      );
     });
 
     it("should not set response headers if authentication fails", async () => {
@@ -75,6 +84,7 @@ describe("AuthController", () => {
       );
 
       expect(res.set).not.toHaveBeenCalled();
+      expect(res.cookie).not.toHaveBeenCalled();
     });
 
     it("should propagate authentication errors", async () => {

@@ -76,14 +76,18 @@ describe("AuthService", () => {
 
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValue({
-          access_token: githubAccessToken,
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: githubAccessToken }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
         }),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValue(profileData),
-      } as unknown as Response);
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(profileData), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
   });
 
   afterEach(() => {
@@ -113,19 +117,13 @@ describe("AuthService", () => {
       );
     });
 
-    it("should fetch the GitHub profile using the access token", async () => {
+    it("should fetch the authenticated GitHub profile using the access token", async () => {
       await service.authenticate("oauth-code");
 
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "https://api.github.com/user",
-        {
-          headers: {
-            Authorization: `Bearer ${githubAccessToken}`,
-            Accept: "application/json",
-          },
-        },
-      );
+      const [url, options] = (global.fetch as jest.Mock).mock.calls[1];
+
+      expect(url).toBe("https://api.github.com/user");
+      expect(options.headers.authorization).toBe(`token ${githubAccessToken}`);
     });
 
     it("should save the user using their GitHub profile data", async () => {

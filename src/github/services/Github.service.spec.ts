@@ -1,35 +1,86 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { GithubService } from "./Github.service";
-import { UserService } from "../../user/services/User.service";
-import { GithubAccessService } from "../../auth/services/GithubAccess.service";
-import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
+import { jest as jestModule } from "@jest/globals";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 
+type MockOctokit = {
+  paginate: jest.Mock;
+  rest: {
+    repos: {
+      listForAuthenticatedUser: jest.Mock;
+      transfer: jest.Mock;
+      get: jest.Mock;
+      createOrUpdateFileContents: jest.Mock;
+    };
+  };
+};
+
+const mockOctokit: MockOctokit = {
+  paginate: jest.fn(),
+  rest: {
+    repos: {
+      listForAuthenticatedUser: jest.fn(),
+      transfer: jest.fn(),
+      get: jest.fn(),
+      createOrUpdateFileContents: jest.fn(),
+    },
+  },
+};
+
+jestModule.unstable_mockModule("octokit", () => ({
+  Octokit: jest.fn(() => mockOctokit),
+}));
+
 describe("GithubService", () => {
-  let service: GithubService;
+  type GithubServiceConstructor =
+    typeof import("./Github.service.js").GithubService;
+
+  let Test: typeof import("@nestjs/testing").Test;
+  let EventEmitter2: typeof import("@nestjs/event-emitter").EventEmitter2;
+  let UserService: typeof import("../../user/services/User.service").UserService;
+  let GithubAccessService: typeof import("../../auth/services/GithubAccess.service").GithubAccessService;
+  let TransferSessionService: typeof import("../../transfer-session/services/TransferSession.service").TransferSessionService;
+  let GithubService: GithubServiceConstructor;
+  let Octokit: jest.Mock;
+  let service: InstanceType<GithubServiceConstructor>;
   let userService: { findById: jest.Mock };
   let githubAccessService: { get: jest.Mock };
   let transferSessionService: { findById: jest.Mock };
   let eventEmitter: { emit: jest.Mock };
-  let fetchMock: jest.Mock;
-  let originalFetch: typeof global.fetch;
 
-  const makeResponse = (options: {
-    ok: boolean;
-    status?: number;
-    json?: () => Promise<unknown>;
-  }) =>
-    ({
-      ok: options.ok,
-      status: options.status ?? (options.ok ? 200 : 500),
-      json: options.json ?? (async () => []),
-    }) as Response;
+  const getOctokit = (): MockOctokit => mockOctokit;
+
+  beforeAll(async () => {
+    const [
+      testingModule,
+      eventEmitterModule,
+      userServiceModule,
+      githubAccessModule,
+      transferSessionModule,
+      octokitModule,
+      githubServiceModule,
+    ] = await Promise.all([
+      import("@nestjs/testing"),
+      import("@nestjs/event-emitter"),
+      import("../../user/services/User.service.js"),
+      import("../../auth/services/GithubAccess.service.js"),
+      import("../../transfer-session/services/TransferSession.service.js"),
+      import("octokit"),
+      import("./Github.service.js"),
+    ]);
+
+    Test = testingModule.Test;
+    EventEmitter2 = eventEmitterModule.EventEmitter2;
+    UserService = userServiceModule.UserService;
+    GithubAccessService = githubAccessModule.GithubAccessService;
+    TransferSessionService = transferSessionModule.TransferSessionService;
+    Octokit = octokitModule.Octokit as unknown as jest.Mock;
+    GithubService = githubServiceModule.GithubService;
+  });
 
   beforeEach(async () => {
-    originalFetch = global.fetch;
-    fetchMock = jest.fn();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    Octokit.mockClear();
+    Octokit.mockImplementation(() => mockOctokit);
+    mockOctokit.paginate.mockReset();
+    Object.values(mockOctokit.rest.repos).forEach((mock) => mock.mockReset());
 
     userService = {
       findById: jest.fn(),
@@ -47,7 +98,7 @@ describe("GithubService", () => {
       emit: jest.fn(),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       providers: [
         GithubService,
         { provide: UserService, useValue: userService },
@@ -60,11 +111,10 @@ describe("GithubService", () => {
       ],
     }).compile();
 
-    service = module.get<GithubService>(GithubService);
+    service = module.get<InstanceType<GithubServiceConstructor>>(GithubService);
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
     jest.clearAllMocks();
   });
 
@@ -79,115 +129,43 @@ describe("GithubService", () => {
     });
 
     it("should retrieve the owner and GitHub access token", async () => {
-      fetchMock.mockResolvedValue(
-        makeResponse({
-          ok: true,
-          json: async () => [{ id: 1, name: "project" }],
-        }),
-      );
-
       await service.fetchRepositories(ownerId);
 
       expect(userService.findById).toHaveBeenCalledWith(ownerId);
       expect(githubAccessService.get).toHaveBeenCalledWith(owner);
+      expect(Octokit).toHaveBeenCalledWith({
+        auth: accessToken,
+      });
     });
 
-    it("should fetch repositories using the expected URL and headers", async () => {
-      fetchMock.mockResolvedValue(
-        makeResponse({
-          ok: true,
-          json: async () => [{ id: 1, name: "project" }],
-        }),
-      );
+    it("should initialize Octokit with the owner's access token", async () => {
+      getOctokit().paginate.mockResolvedValue([]);
 
       await service.fetchRepositories(ownerId);
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.github.com/user/repos?affiliation=owner&per_page=100&page=1",
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2026-03-10",
-          },
-        },
-      );
+      expect(Octokit).toHaveBeenCalledWith({
+        auth: accessToken,
+      });
     });
 
-    it("should return repositories from the first page", async () => {
+    it("should paginate the authenticated owner's repositories", async () => {
       const repositories = [
         { id: 1, name: "project-a" },
         { id: 2, name: "project-b" },
       ];
 
-      fetchMock.mockResolvedValue(
-        makeResponse({
-          ok: true,
-          json: async () => repositories,
-        }),
-      );
+      getOctokit().paginate.mockResolvedValue(repositories);
 
       await expect(service.fetchRepositories(ownerId)).resolves.toEqual(
         repositories,
       );
 
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-    });
-
-    it("should fetch subsequent pages when a page contains 100 repositories", async () => {
-      const firstPage = Array.from({ length: 100 }, (_, i) => ({
-        id: i + 1,
-        name: `project-${i + 1}`,
-      }));
-      const secondPage = [{ id: 101, name: "project-101" }];
-
-      fetchMock
-        .mockResolvedValueOnce(
-          makeResponse({
-            ok: true,
-            json: async () => firstPage,
-          }),
-        )
-        .mockResolvedValueOnce(
-          makeResponse({
-            ok: true,
-            json: async () => secondPage,
-          }),
-        );
-
-      const result = await service.fetchRepositories(ownerId);
-
-      expect(result).toHaveLength(101);
-      expect(result).toEqual([...firstPage, ...secondPage]);
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(fetchMock.mock.calls[1][0]).toBe(
-        "https://api.github.com/user/repos?affiliation=owner&per_page=100&page=2",
-      );
-    });
-
-    it("should stop fetching when a page contains fewer than 100 repositories", async () => {
-      fetchMock.mockResolvedValue(
-        makeResponse({
-          ok: true,
-          json: async () =>
-            Array.from({ length: 99 }, (_, i) => ({
-              id: i + 1,
-              name: `project-${i + 1}`,
-            })),
-        }),
-      );
-
-      const result = await service.fetchRepositories(ownerId);
-
-      expect(result).toHaveLength(99);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-    });
-
-    it("should throw when the GitHub API returns an unsuccessful response", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: false, status: 403 }));
-
-      await expect(service.fetchRepositories(ownerId)).rejects.toThrow(
-        "GitHub API error: 403",
+      expect(getOctokit().paginate).toHaveBeenCalledWith(
+        getOctokit().rest.repos.listForAuthenticatedUser,
+        {
+          affiliation: "owner",
+          per_page: 100,
+        },
       );
     });
 
@@ -196,7 +174,9 @@ describe("GithubService", () => {
       userService.findById.mockRejectedValue(error);
 
       await expect(service.fetchRepositories(ownerId)).rejects.toThrow(error);
-      expect(fetchMock).not.toHaveBeenCalled();
+
+      expect(githubAccessService.get).not.toHaveBeenCalled();
+      expect(Octokit).not.toHaveBeenCalled();
     });
 
     it("should propagate errors from GithubAccessService", async () => {
@@ -204,7 +184,15 @@ describe("GithubService", () => {
       githubAccessService.get.mockRejectedValue(error);
 
       await expect(service.fetchRepositories(ownerId)).rejects.toThrow(error);
-      expect(fetchMock).not.toHaveBeenCalled();
+
+      expect(Octokit).not.toHaveBeenCalled();
+    });
+
+    it("should propagate errors from Octokit pagination", async () => {
+      const error = new Error("GitHub API error");
+      getOctokit().paginate.mockRejectedValue(error);
+
+      await expect(service.fetchRepositories(ownerId)).rejects.toThrow(error);
     });
   });
 
@@ -230,10 +218,11 @@ describe("GithubService", () => {
 
     beforeEach(() => {
       transferSessionService.findById.mockResolvedValue(transferSession);
+      githubAccessService.get.mockResolvedValue("owner-token");
     });
 
     it("should retrieve the transfer session with the required relations", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+      getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
       await service.startGithubHandover(transferSessionId);
 
@@ -246,27 +235,33 @@ describe("GithubService", () => {
       );
     });
 
-    it("should request a GitHub repository transfer to the applicant", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+    it("should retrieve the owner's access token and initialize Octokit", async () => {
+      getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
       await service.startGithubHandover(transferSessionId);
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.github.com/repos/old-owner/my-project/transfer",
-        {
-          method: "POST",
-          body: JSON.stringify({ new_owner: "new-owner" }),
-          headers: {
-            Accept: "application/vnd.github+json",
-            Authorization: "Bearer owner-token",
-            "X-Github-Api-Version": "2026-03-10",
-          },
-        },
+      expect(githubAccessService.get).toHaveBeenCalledWith(
+        transferSession.project.owner,
       );
+      expect(Octokit).toHaveBeenCalledWith({
+        auth: "owner-token",
+      });
     });
 
-    it("should set the project status to TRANSFERRING after the response", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+    it("should request a repository transfer to the applicant", async () => {
+      getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
+
+      await service.startGithubHandover(transferSessionId);
+
+      expect(getOctokit().rest.repos.transfer).toHaveBeenCalledWith({
+        owner: "old-owner",
+        repo: "my-project",
+        new_owner: "new-owner",
+      });
+    });
+
+    it("should set the project status to TRANSFERRING after the transfer succeeds", async () => {
+      getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
       await service.startGithubHandover(transferSessionId);
 
@@ -275,12 +270,16 @@ describe("GithubService", () => {
       );
     });
 
-    it("should emit a transfer termination event when GitHub rejects the transfer", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: false, status: 422 }));
+    it("should emit a termination event and rethrow when GitHub rejects the transfer", async () => {
+      const error = Object.assign(new Error("Transfer rejected"), {
+        status: 422,
+      });
+
+      getOctokit().rest.repos.transfer.mockRejectedValue(error);
 
       await expect(
         service.startGithubHandover(transferSessionId),
-      ).rejects.toThrow("Github API error: 422");
+      ).rejects.toThrow(error);
 
       expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
         transferSessionId,
@@ -289,7 +288,7 @@ describe("GithubService", () => {
     });
 
     it("should not emit a termination event when the transfer succeeds", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+      getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
       await service.startGithubHandover(transferSessionId);
 
@@ -304,7 +303,19 @@ describe("GithubService", () => {
         service.startGithubHandover(transferSessionId),
       ).rejects.toThrow(error);
 
-      expect(fetchMock).not.toHaveBeenCalled();
+      expect(githubAccessService.get).not.toHaveBeenCalled();
+      expect(Octokit).not.toHaveBeenCalled();
+    });
+
+    it("should propagate errors from GithubAccessService", async () => {
+      const error = new Error("Access token unavailable");
+      githubAccessService.get.mockRejectedValue(error);
+
+      await expect(
+        service.startGithubHandover(transferSessionId),
+      ).rejects.toThrow(error);
+
+      expect(Octokit).not.toHaveBeenCalled();
     });
   });
 
@@ -314,25 +325,41 @@ describe("GithubService", () => {
       repositoryName: "my-project",
     };
 
-    it("should return true when the repository exists and GitHub responds successfully", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+    it("should return true when the repository exists", async () => {
+      getOctokit().rest.repos.get.mockResolvedValue({ data: {} });
 
       await expect(service.validateRepositry(data)).resolves.toBe(true);
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.github.com/repos/repo-owner/my-project",
-      );
+      expect(Octokit).toHaveBeenCalledWith();
+      expect(getOctokit().rest.repos.get).toHaveBeenCalledWith({
+        owner: data.ownerLogin,
+        repo: data.repositoryName,
+      });
     });
 
-    it("should return false when GitHub responds unsuccessfully", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: false, status: 404 }));
+    it("should return false when GitHub returns a 404", async () => {
+      const error = Object.assign(new Error("Not Found"), {
+        status: 404,
+      });
+
+      getOctokit().rest.repos.get.mockRejectedValue(error);
 
       await expect(service.validateRepositry(data)).resolves.toBe(false);
     });
 
+    it("should propagate errors other than 404", async () => {
+      const error = Object.assign(new Error("Forbidden"), {
+        status: 403,
+      });
+
+      getOctokit().rest.repos.get.mockRejectedValue(error);
+
+      await expect(service.validateRepositry(data)).rejects.toThrow(error);
+    });
+
     it("should propagate network errors", async () => {
       const error = new Error("Network failure");
-      fetchMock.mockRejectedValue(error);
+      getOctokit().rest.repos.get.mockRejectedValue(error);
 
       await expect(service.validateRepositry(data)).rejects.toThrow(error);
     });
@@ -359,40 +386,66 @@ describe("GithubService", () => {
 
     beforeEach(() => {
       transferSessionService.findById.mockResolvedValue(transferSession);
+      githubAccessService.get.mockResolvedValue("new-owner-token");
     });
 
-    it("should retrieve the transfer session", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+    it("should retrieve the transfer session with the required relations", async () => {
+      getOctokit().rest.repos.createOrUpdateFileContents.mockResolvedValue({
+        data: {},
+      });
 
       await service.finishGithubHandover(transferSessionId);
 
       expect(transferSessionService.findById).toHaveBeenCalledWith(
         transferSessionId,
+        {
+          project: { owner: true },
+          applicant: { githubAccessToken: true },
+        },
       );
     });
 
-    it("should create TRANSFER.md in the new owner's repository", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+    it("should initialize Octokit using the new owner's access token", async () => {
+      getOctokit().rest.repos.createOrUpdateFileContents.mockResolvedValue({
+        data: {},
+      });
 
       await service.finishGithubHandover(transferSessionId);
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.github.com/repos/new-owner/my-project/contents/TRANSFER.md",
+      expect(githubAccessService.get).toHaveBeenCalledWith(
+        transferSession.applicant,
+      );
+      expect(Octokit).toHaveBeenCalledWith({
+        auth: "new-owner-token",
+      });
+    });
+
+    it("should create TRANSFER.md in the new owner's repository", async () => {
+      getOctokit().rest.repos.createOrUpdateFileContents.mockResolvedValue({
+        data: {},
+      });
+
+      await service.finishGithubHandover(transferSessionId);
+
+      expect(
+        getOctokit().rest.repos.createOrUpdateFileContents,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: expect.any(String),
+          owner: "new-owner",
+          repo: "my-project",
+          path: "TRANSFER.md",
+          message:
+            "Create TRANSFER.md after repository transfer (by Chance of Idea team)",
+          content: expect.any(String),
         }),
       );
 
-      const requestBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+      const request =
+        getOctokit().rest.repos.createOrUpdateFileContents.mock.calls[0][0];
 
-      expect(requestBody.message).toBe(
-        "Create TRANSFER.md after repository transfer (by Chance of Idea team)",
+      const decodedContent = Buffer.from(request.content, "base64").toString(
+        "utf8",
       );
-
-      const decodedContent = Buffer.from(
-        requestBody.content,
-        "base64",
-      ).toString("utf-8");
 
       expect(decodedContent).toContain("# Repository Transfer Record");
       expect(decodedContent).toContain("**Project Title:** My Project");
@@ -403,7 +456,9 @@ describe("GithubService", () => {
     });
 
     it("should emit transfer.finished when creating TRANSFER.md succeeds", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: true }));
+      getOctokit().rest.repos.createOrUpdateFileContents.mockResolvedValue({
+        data: {},
+      });
 
       await service.finishGithubHandover(transferSessionId);
 
@@ -413,7 +468,13 @@ describe("GithubService", () => {
     });
 
     it("should emit a termination event when creating TRANSFER.md fails", async () => {
-      fetchMock.mockResolvedValue(makeResponse({ ok: false, status: 403 }));
+      const error = Object.assign(new Error("Forbidden"), {
+        status: 403,
+      });
+
+      getOctokit().rest.repos.createOrUpdateFileContents.mockRejectedValue(
+        error,
+      );
 
       await expect(
         service.finishGithubHandover(transferSessionId),
@@ -438,16 +499,39 @@ describe("GithubService", () => {
         service.finishGithubHandover(transferSessionId),
       ).rejects.toThrow(error);
 
-      expect(fetchMock).not.toHaveBeenCalled();
+      expect(githubAccessService.get).not.toHaveBeenCalled();
+      expect(Octokit).not.toHaveBeenCalled();
     });
 
-    it("should propagate network errors when creating TRANSFER.md", async () => {
-      const error = new Error("Network failure");
-      fetchMock.mockRejectedValue(error);
+    it("should emit a termination event when GithubAccessService fails", async () => {
+      const error = new Error("Access token unavailable");
+      githubAccessService.get.mockRejectedValue(error);
 
       await expect(
         service.finishGithubHandover(transferSessionId),
-      ).rejects.toThrow(error);
+      ).resolves.toBeUndefined();
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
+        transferSessionId,
+        failed: true,
+      });
+    });
+
+    it("should handle network errors when creating TRANSFER.md", async () => {
+      const error = new Error("Network failure");
+
+      getOctokit().rest.repos.createOrUpdateFileContents.mockRejectedValue(
+        error,
+      );
+
+      await expect(
+        service.finishGithubHandover(transferSessionId),
+      ).resolves.toBeUndefined();
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
+        transferSessionId,
+        failed: true,
+      });
     });
   });
 });

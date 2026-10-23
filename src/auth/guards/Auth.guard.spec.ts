@@ -36,6 +36,7 @@ describe("AuthGuard", () => {
 
     res = {
       setHeader: jest.fn(),
+      cookie: jest.fn(),
     };
 
     context = {
@@ -74,7 +75,7 @@ describe("AuthGuard", () => {
     });
 
     it("should reject an invalid access token", async () => {
-      req.headers.authorization = "Bearer invalid-token";
+      req.headers.authorization = "Bearer access-token";
       jwtService.validateAccess.mockImplementation(() => {
         throw new UnauthorizedException();
       });
@@ -96,28 +97,33 @@ describe("AuthGuard", () => {
       expect(jwtService.validateAccess).not.toHaveBeenCalled();
     });
 
-    it("should authenticate using a refresh token and issue a new access token", async () => {
+    it("should refresh using a valid refresh token and rotate its cookie", async () => {
       req.cookies.refresh = "refresh-token";
 
       jwtService.validateRefresh.mockReturnValue(payload);
       jwtService.refresh.mockResolvedValue({
         access: "new-access-token",
+        refresh: "new-refresh-token",
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
 
       expect(jwtService.validateRefresh).toHaveBeenCalledWith("refresh-token");
       expect(jwtService.refresh).toHaveBeenCalledWith("refresh-token");
-
       expect(res.setHeader).toHaveBeenCalledWith(
         "x-access-token",
         "new-access-token",
       );
-      expect(res.setHeader).toHaveBeenCalledWith(
-        "x-refresh-token",
-        "refresh-token",
+      expect(res.cookie).toHaveBeenCalledWith(
+        "refresh",
+        "new-refresh-token",
+        expect.objectContaining({
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          path: "/",
+        }),
       );
-
       expect(req.user).toEqual(payload);
     });
 
@@ -134,15 +140,17 @@ describe("AuthGuard", () => {
 
       expect(jwtService.refresh).not.toHaveBeenCalled();
       expect(res.setHeader).not.toHaveBeenCalled();
+      expect(res.cookie).not.toHaveBeenCalled();
     });
 
-    it("should return false when both access and refresh tokens are present", async () => {
+    it("should prefer a valid access token when both tokens are present", async () => {
       req.headers.authorization = "Bearer access-token";
       req.cookies.refresh = "refresh-token";
+      jwtService.validateAccess.mockReturnValue(payload);
 
-      await expect(guard.canActivate(context)).resolves.toBe(false);
+      await expect(guard.canActivate(context)).resolves.toBe(true);
 
-      expect(jwtService.validateAccess).not.toHaveBeenCalled();
+      expect(jwtService.validateAccess).toHaveBeenCalledWith("access-token");
       expect(jwtService.validateRefresh).not.toHaveBeenCalled();
       expect(jwtService.refresh).not.toHaveBeenCalled();
     });

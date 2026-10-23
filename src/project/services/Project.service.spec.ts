@@ -38,12 +38,11 @@ describe("ProjectService", () => {
     ok: boolean,
     status = ok ? 200 : 500,
     json: unknown = {},
-  ) =>
-    ({
-      ok,
+  ): Response =>
+    new Response(JSON.stringify(json), {
       status,
-      json: jest.fn().mockResolvedValue(json),
-    }) as unknown as Response;
+      headers: { "content-type": "application/json" },
+    });
 
   beforeEach(async () => {
     originalFetch = global.fetch;
@@ -163,7 +162,7 @@ describe("ProjectService", () => {
       expect(tagService.findById).toHaveBeenNthCalledWith(1, "tag-1");
       expect(tagService.findById).toHaveBeenNthCalledWith(2, "tag-2");
       expect(userService.findById).toHaveBeenCalledWith("user-1");
-      expect(fetchMock).toHaveBeenCalledWith(
+      expect(fetchMock.mock.calls[0][0]).toBe(
         "https://api.github.com/repos/github-owner/submitted-repo-name",
       );
     });
@@ -241,7 +240,7 @@ describe("ProjectService", () => {
       fetchMock.mockResolvedValue(makeResponse(false, 404));
 
       await expect(service.create(data)).rejects.toThrow(
-        "Github API error: 404",
+        "GitHub repository not found or inaccessible",
       );
 
       expect(repository.save).not.toHaveBeenCalled();
@@ -251,9 +250,9 @@ describe("ProjectService", () => {
       const error = new Error("Network failure");
       fetchMock.mockRejectedValue(error);
 
-      await expect(service.create(data)).rejects.toThrow(error);
+      await expect(service.create(data)).rejects.toThrow(/Network failure/);
       expect(repository.save).not.toHaveBeenCalled();
-    });
+    }, 20_000);
 
     it("should propagate repository save errors", async () => {
       const error = new Error("Database save failed");

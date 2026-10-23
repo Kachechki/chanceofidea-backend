@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
+import type { Response } from "express";
 import { IRequestWithRefresh } from "../../types/RequestWithRefresh.interface";
 import { JwtTokenService } from "../services/Jwt.service";
 
@@ -19,23 +20,30 @@ export class AuthGuard implements CanActivate {
     const access = this.useAccess(req);
     const refresh = this.useRefresh(req);
 
-    const res = ctx.getResponse();
+    const res = ctx.getResponse<Response>();
 
-    if (!refresh) throw new UnauthorizedException();
-
-    if (!access && refresh) {
-      const payload = this.jwtService.validateRefresh(refresh);
-
-      const newAccess = (await this.jwtService.refresh(refresh)).access;
-
-      res.setHeader("x-access-token", newAccess);
-
-      req.user = payload;
-
+    if (access) {
+      req.user = this.jwtService.validateAccess(access);
       return true;
     }
 
-    return false;
+    if (!refresh) throw new UnauthorizedException();
+
+    const payload = this.jwtService.validateRefresh(refresh);
+    const jwtPair = await this.jwtService.refresh(refresh);
+
+    res.setHeader("x-access-token", jwtPair.access);
+    res.cookie("refresh", jwtPair.refresh, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 3600 * 1000,
+    });
+
+    req.user = payload;
+
+    return true;
   }
 
   private useAccess(req: IRequestWithRefresh): string | undefined {
