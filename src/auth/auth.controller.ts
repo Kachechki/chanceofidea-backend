@@ -19,6 +19,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const jwtPair = await this.authService.authenticate(code);
+    console.log(jwtPair);
 
     res.set({ "x-access-token": jwtPair.access });
     res.cookie("refresh", jwtPair.refresh, {

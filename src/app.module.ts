@@ -23,6 +23,7 @@ import { ApplicationEntity } from "./application/entities/Application.entity";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { TransferSessionModule } from "./transfer-session/transfer-session.module";
 import { TransferSessionEntity } from "./transfer-session/entities/TransferSession.entity";
+import { CacheModule } from "@nestjs/cache-manager";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -70,6 +71,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ApplicationModule,
     EventEmitterModule.forRoot(),
     TransferSessionModule,
+    CacheModule.register({ isGlobal: true }),
   ],
 })
 export class AppModule {}

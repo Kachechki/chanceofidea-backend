@@ -8,6 +8,7 @@ import { TagModule } from "../tag/tag.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
 import { TransferSessionModule } from "../transfer-session/transfer-session.module";
+import { CacheModule } from "@nestjs/cache-manager";
 
 @Module({
   imports: [
