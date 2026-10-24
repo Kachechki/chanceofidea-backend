@@ -190,7 +190,10 @@ export class ApplicationService implements IApplicationService {
 
   async findOutcoming(userId: string): Promise<ApplicationEntity[]> {
     const user = await this.userService.findById(userId, {
-      applications: true,
+      applications: {
+        applicant: true,
+        project: true,
+      },
     });
 
     return user.applications;
