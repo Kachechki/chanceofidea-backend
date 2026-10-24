@@ -134,7 +134,9 @@ export class ApplicationService implements IApplicationService {
         });
 
         if (acceptedApplicationExists)
-          throw new ConflictException("One of the applications is already accepted");
+          throw new ConflictException(
+            "One of the applications is already accepted",
+          );
 
         const application = await repository.findOne({
           where: { id },
@@ -178,7 +180,12 @@ export class ApplicationService implements IApplicationService {
       applications: { applicant: true },
     });
 
-    return projects.flatMap((project) => project.applications);
+    return projects.flatMap((project) =>
+      project.applications.map((application) => {
+        application.project = project;
+        return application;
+      }),
+    );
   }
 
   async findOutcoming(userId: string): Promise<ApplicationEntity[]> {

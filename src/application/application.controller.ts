@@ -187,6 +187,7 @@ export class ApplicationController {
       plan: entity.plan,
       portfolioUrl: entity.portflioUrl,
       rejectReason: entity.rejectReason,
+      project: entity.project,
     }));
   }
 }

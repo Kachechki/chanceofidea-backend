@@ -183,6 +183,7 @@ describe("ApplicationController", () => {
         whyMe: "I can finish this project",
         plan: "Refactor the backend and add tests",
         portflioUrl: "https://github.com/example/portfolio",
+        project: { id: "project-1" },
       });
 
       applicationService.findOutcoming.mockResolvedValue([entity]);
@@ -198,6 +199,7 @@ describe("ApplicationController", () => {
           plan: "Refactor the backend and add tests",
           portfolioUrl: "https://github.com/example/portfolio",
           rejectReason: null,
+          project: { id: "project-1" },
         },
       ]);
 
