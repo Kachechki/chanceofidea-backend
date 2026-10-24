@@ -173,13 +173,7 @@ export class ProjectController {
   @ApiBadRequestResponse({
     description: "Invalid search parameters",
   })
-  async search(
-    @Query() dto: SearchProjectsDto,
-    @Param() pageDto: SearchProjectsPageDto,
-  ) {
-    return this.projectService.search({
-      ...dto,
-      ...pageDto,
-    });
+  async search(@Query() dto: SearchProjectsDto) {
+    return this.projectService.search(dto);
   }
 }

@@ -36,9 +36,7 @@ export class SearchProjectsDto {
   @IsOptional()
   @IsString()
   searchQuery: string;
-}
 
-export class SearchProjectsPageDto {
   @ApiProperty({
     description: "Page number for pagination, starting at 1",
     example: 1,
