@@ -477,7 +477,10 @@ describe("ApplicationService", () => {
       await expect(service.findOutcoming(userId)).resolves.toBe(applications);
 
       expect(userService.findById).toHaveBeenCalledWith(userId, {
-        applications: true,
+        applications: {
+          applicant: true,
+          project: true,
+        },
       });
     });
   });

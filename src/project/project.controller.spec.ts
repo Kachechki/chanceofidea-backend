@@ -205,34 +205,17 @@ describe("ProjectController", () => {
         searchQuery: "nestjs backend",
         categorySlugs: ["backend"],
         tagSlugs: ["nestjs"],
+        page: 2,
       };
-      const pageDto = { page: 2 };
       const projects = [{ id: "project-1" }];
 
       projectService.search.mockResolvedValue(projects);
 
-      await expect(controller.search(dto as any, pageDto as any)).resolves.toBe(
-        projects,
-      );
+      await expect(controller.search(dto as any)).resolves.toBe(projects);
 
       expect(projectService.search).toHaveBeenCalledTimes(1);
       expect(projectService.search).toHaveBeenCalledWith({
         ...dto,
-        ...pageDto,
-      });
-    });
-
-    it("should let pageDto values override duplicate query DTO properties", async () => {
-      const dto = { page: 1, searchQuery: "backend" };
-      const pageDto = { page: 3 };
-
-      projectService.search.mockResolvedValue([]);
-
-      await controller.search(dto as any, pageDto as any);
-
-      expect(projectService.search).toHaveBeenCalledWith({
-        searchQuery: "backend",
-        page: 3,
       });
     });
 
@@ -240,9 +223,7 @@ describe("ProjectController", () => {
       const error = new Error("Search failed");
       projectService.search.mockRejectedValue(error);
 
-      await expect(
-        controller.search({} as any, { page: 1 } as any),
-      ).rejects.toThrow(error);
+      await expect(controller.search({} as any)).rejects.toThrow(error);
     });
   });
 });

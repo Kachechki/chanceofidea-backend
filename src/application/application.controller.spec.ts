@@ -152,6 +152,10 @@ describe("ApplicationController", () => {
           plan: "I will implement the missing features",
           portfolioUrl: "https://github.com/example",
           rejectReason: null,
+          project: {
+            id: "project-123",
+            title: "Chance of Idea",
+          },
         },
       ]);
 
