@@ -23,7 +23,7 @@ export class TransferSessionEntity {
   project: ProjectEntity;
 
   @JoinColumn()
-  @OneToOne(() => UserEntity, {
+  @ManyToOne(() => UserEntity, {
     onDelete: "SET NULL",
   })
   applicant: UserEntity;
