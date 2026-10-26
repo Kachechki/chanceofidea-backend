@@ -148,7 +148,27 @@ export class ApplicationController {
       plan: entity.plan,
       portfolioUrl: entity.portflioUrl,
       rejectReason: entity.rejectReason,
-      project: entity.project
+      project: {
+        id: entity.project.id,
+        category: {
+          id: entity.project.category.id,
+          name: entity.project.category.name,
+          slug: entity.project.category.slug,
+        },
+        createdAt: entity.project.createdAt,
+        description: entity.project.description,
+        owner: {
+          id: entity.project.owner.id,
+          bio: entity.project.owner.bio,
+          avatarUrl: entity.project.owner.avatarUrl,
+          createdAt: entity.project.owner.createdAt,
+          login: entity.project.owner.login,
+        },
+        repositoryName: entity.project.repositoryName,
+        status: entity.project.status,
+        tags: entity.project.tags,
+        title: entity.project.title,
+      },
     }));
   }
 
