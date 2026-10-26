@@ -22,6 +22,7 @@ interface IProjectSerice {
   findById(
     id: string,
     relations?: FindOptionsRelations<ProjectEntity>,
+    userId?: string,
   ): Promise<ProjectEntity>;
   update(data: IUpdateProject): Promise<void>;
   delete(id: string): Promise<void>;
@@ -110,6 +111,7 @@ export class ProjectService implements IProjectSerice {
   async findById(
     id: string,
     relations?: FindOptionsRelations<ProjectEntity>,
+    userId?: string,
   ): Promise<ProjectEntity> {
     const project = await this.repository.findOne({
       where: {
@@ -118,6 +120,16 @@ export class ProjectService implements IProjectSerice {
       relations,
     });
     if (!project) throw new NotFoundException("Project not found");
+
+    if (
+      userId &&
+      userId !== project.owner.id &&
+      project.status == ProjectStatusEnum.DRAFT
+    ) {
+      throw new BadRequestException(
+        "Users cannot fetch other people's drafted projects",
+      );
+    }
 
     return project;
   }

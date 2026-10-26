@@ -74,13 +74,20 @@ export class ProjectController {
   @ApiNotFoundResponse({
     description: "Project not found",
   })
-  async get(@Query() dto: ProjectIdDto): Promise<ProjectDto> {
-    const project = await this.projectService.findById(dto.id, {
-      applications: true,
-      category: true,
-      owner: true,
-      tags: true,
-    });
+  async get(
+    @Query() dto: ProjectIdDto,
+    @Req() req: IRequestWithRefresh,
+  ): Promise<ProjectDto> {
+    const project = await this.projectService.findById(
+      dto.id,
+      {
+        applications: true,
+        category: true,
+        owner: true,
+        tags: true,
+      },
+      req.user.id,
+    );
 
     return {
       id: project.id,
