@@ -1,9 +1,12 @@
-import { Entity, OneToOne, PrimaryColumn } from "typeorm";
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { UserEntity } from "../../user/entities/User.entity";
 
 @Entity()
 export class GithubAccessEntity {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
+  @Column({ unique: true })
   githubAccessToken: string;
 
   @OneToOne(() => UserEntity, (user) => user.githubAccessToken)

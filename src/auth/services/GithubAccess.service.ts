@@ -5,9 +5,10 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserService } from "../../user/services/User.service";
 import { EncryptionService } from "./Encryption.service";
+import { ICreateGithubAccess } from "../../types/CreateGithubAccess.interface";
 
 interface IGithubAccessService {
-  save(accessToken: string, userId: string): Promise<void>;
+  save(data: ICreateGithubAccess): Promise<void>;
   get(user: UserEntity): Promise<string>;
 }
 
@@ -20,15 +21,24 @@ export class GithubAccessService implements IGithubAccessService {
     private readonly encryptionService: EncryptionService,
   ) {}
 
-  async save(accessToken: string, userId: string): Promise<void> {
-    const user = await this.userService.findById(userId);
-
-    const githubAccessToken = this.encryptionService.encrypt(accessToken);
-
-    await this.repository.save({
-      githubAccessToken,
-      user,
+  async save(data: ICreateGithubAccess): Promise<void> {
+    const user = await this.userService.findById(data.userId, {
+      githubAccessToken: true,
     });
+
+    const githubAccessToken = this.encryptionService.encrypt(data.accessToken);
+
+    if (user.githubAccessToken)
+      await this.repository.save({
+        id: user.githubAccessToken.id,
+        githubAccessToken,
+        user,
+      });
+    else
+      await this.repository.save({
+        githubAccessToken,
+        user,
+      });
   }
 
   async get(user: UserEntity): Promise<string> {

@@ -60,14 +60,14 @@ describe("GithubAccessService", () => {
 
   describe("save", () => {
     it("should find the user by ID", async () => {
-      await service.save(accessToken, userId);
+      await service.save({ accessToken, userId });
 
       expect(userService.findById).toHaveBeenCalledWith(userId);
       expect(userService.findById).toHaveBeenCalledTimes(1);
     });
 
     it("should encrypt the access token before saving it", async () => {
-      await service.save(accessToken, userId);
+      await service.save({ accessToken, userId });
 
       expect(encryptionService.encrypt).toHaveBeenCalledWith(accessToken);
 
@@ -78,7 +78,7 @@ describe("GithubAccessService", () => {
     });
 
     it("should save the encrypted token associated with the correct user", async () => {
-      await service.save(accessToken, userId);
+      await service.save({ accessToken, userId });
 
       expect(repository.save).toHaveBeenCalledTimes(1);
       expect(repository.save).toHaveBeenCalledWith(
@@ -92,7 +92,7 @@ describe("GithubAccessService", () => {
     it("should not encrypt or save a token if finding the user fails", async () => {
       userService.findById.mockRejectedValue(new Error("User not found"));
 
-      await expect(service.save(accessToken, userId)).rejects.toThrow(
+      await expect(service.save({ accessToken, userId })).rejects.toThrow(
         "User not found",
       );
 
@@ -105,7 +105,7 @@ describe("GithubAccessService", () => {
         throw new Error("Encryption failed");
       });
 
-      await expect(service.save(accessToken, userId)).rejects.toThrow(
+      await expect(service.save({ accessToken, userId })).rejects.toThrow(
         "Encryption failed",
       );
 
@@ -115,7 +115,7 @@ describe("GithubAccessService", () => {
     it("should propagate repository save errors", async () => {
       repository.save.mockRejectedValue(new Error("Database error"));
 
-      await expect(service.save(accessToken, userId)).rejects.toThrow(
+      await expect(service.save({ accessToken, userId })).rejects.toThrow(
         "Database error",
       );
     });

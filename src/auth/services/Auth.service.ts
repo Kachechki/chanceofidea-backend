@@ -1,10 +1,15 @@
 import { ConfigService } from "@nestjs/config";
 import { UserService } from "../../user/services/User.service";
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { Octokit } from "octokit";
 import { JwtTokenService } from "./Jwt.service";
 import { IJwtPair } from "../../types/JwtPair.interface";
 import { GithubAccessService } from "./GithubAccess.service";
+import { error } from "console";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
@@ -61,7 +66,10 @@ export class AuthService implements IAuthService {
       githubId: profile.id,
     });
 
-    await this.githubAccessService.save(tokenData.access_token, userId);
+    await this.githubAccessService.save({
+      accessToken: tokenData.access_token,
+      userId,
+    });
 
     return this.jwtService.sign({ id: userId });
   }
