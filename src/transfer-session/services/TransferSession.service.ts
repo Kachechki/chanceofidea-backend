@@ -95,10 +95,16 @@ export class TransferSessionService implements ITransferSessionService {
         ownerLogin: applicant.login,
         repositoryName: transferSession.project.repositoryName,
       }))
-    )
+    ) {
+      await this.eventEmitter.emit("transfer.terminated", {
+        transferSessionId: transferSession.id,
+        failed: false,
+      });
+
       throw new NotAcceptableException(
         "You have not yet accepted the repository transfer",
       );
+    }
 
     this.eventEmitter.emit("transfer.success", {
       transferSessionId: transferSession.id,
@@ -119,10 +125,15 @@ export class TransferSessionService implements ITransferSessionService {
         ownerLogin: applicant.login,
         repositoryName: transferSession.project.repositoryName,
       })
-    )
+    ) {
+      this.eventEmitter.emit("transfer.success", {
+        transferSessionid: transferSession.id,
+      });
+
       throw new NotAcceptableException(
         "You have actually accepted the repository transfer",
       );
+    }
 
     this.eventEmitter.emit("transfer.terminated", {
       transferSessionId: transferSession.id,
