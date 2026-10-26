@@ -224,7 +224,7 @@ describe("GithubService", () => {
     it("should retrieve the transfer session with the required relations", async () => {
       getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
-      await service.startGithubHandover(transferSessionId);
+      await service.startGithubHandover({ transferSessionId });
 
       expect(transferSessionService.findById).toHaveBeenCalledWith(
         transferSessionId,
@@ -238,7 +238,7 @@ describe("GithubService", () => {
     it("should retrieve the owner's access token and initialize Octokit", async () => {
       getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
-      await service.startGithubHandover(transferSessionId);
+      await service.startGithubHandover({ transferSessionId });
 
       expect(githubAccessService.get).toHaveBeenCalledWith(
         transferSession.project.owner,
@@ -251,7 +251,7 @@ describe("GithubService", () => {
     it("should request a repository transfer to the applicant", async () => {
       getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
-      await service.startGithubHandover(transferSessionId);
+      await service.startGithubHandover({ transferSessionId });
 
       expect(getOctokit().rest.repos.transfer).toHaveBeenCalledWith({
         owner: "old-owner",
@@ -263,7 +263,7 @@ describe("GithubService", () => {
     it("should set the project status to TRANSFERRING after the transfer succeeds", async () => {
       getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
-      await service.startGithubHandover(transferSessionId);
+      await service.startGithubHandover({ transferSessionId });
 
       expect(transferSession.project.status).toBe(
         ProjectStatusEnum.TRANSFERRING,
@@ -278,7 +278,7 @@ describe("GithubService", () => {
       getOctokit().rest.repos.transfer.mockRejectedValue(error);
 
       await expect(
-        service.startGithubHandover(transferSessionId),
+        service.startGithubHandover({ transferSessionId }),
       ).rejects.toThrow(error);
 
       expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
@@ -290,7 +290,7 @@ describe("GithubService", () => {
     it("should not emit a termination event when the transfer succeeds", async () => {
       getOctokit().rest.repos.transfer.mockResolvedValue({ data: {} });
 
-      await service.startGithubHandover(transferSessionId);
+      await service.startGithubHandover({ transferSessionId });
 
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -300,7 +300,7 @@ describe("GithubService", () => {
       transferSessionService.findById.mockRejectedValue(error);
 
       await expect(
-        service.startGithubHandover(transferSessionId),
+        service.startGithubHandover({ transferSessionId }),
       ).rejects.toThrow(error);
 
       expect(githubAccessService.get).not.toHaveBeenCalled();
@@ -312,7 +312,7 @@ describe("GithubService", () => {
       githubAccessService.get.mockRejectedValue(error);
 
       await expect(
-        service.startGithubHandover(transferSessionId),
+        service.startGithubHandover({ transferSessionId }),
       ).rejects.toThrow(error);
 
       expect(Octokit).not.toHaveBeenCalled();

@@ -12,7 +12,7 @@ import { type ITransferResultsPayload } from "../../types/TransferResultsPayload
 
 interface IGithubService {
   fetchRepositories(ownerId: string): Promise<IGithubRepository[]>;
-  startGithubHandover(transferSessionId: string): Promise<void>;
+  startGithubHandover(payload: ITransferResultsPayload): Promise<void>;
   validateRepositry(data: IValidateRepositroy): Promise<boolean>;
   finishGithubHandover(payload: ITransferResultsPayload): Promise<void>;
 }
@@ -45,9 +45,9 @@ export class GithubService implements IGithubService {
   }
 
   @OnEvent("application.accepted")
-  async startGithubHandover(transferSessionId: string): Promise<void> {
+  async startGithubHandover(payload: ITransferResultsPayload): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
-      transferSessionId,
+      payload.transferSessionId,
       {
         project: {
           owner: {
@@ -75,7 +75,7 @@ export class GithubService implements IGithubService {
       transferSession.project.status = ProjectStatusEnum.TRANSFERRING;
     } catch (error) {
       this.eventEmitter.emit("transfer.termiated", {
-        transferSessionId,
+        transferSessionId: payload.transferSessionId,
         failed: true,
       });
 
