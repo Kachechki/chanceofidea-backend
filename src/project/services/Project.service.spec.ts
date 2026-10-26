@@ -725,7 +725,7 @@ describe("ProjectService", () => {
       transferSessionService.findById.mockRejectedValue(error);
 
       await expect(
-        service.handleTransferTerminated(transferSessionId, true),
+        service.handleTransferTerminated({ transferSessionId, failed: true }),
       ).rejects.toThrow(error);
 
       expect(repository.save).not.toHaveBeenCalled();
@@ -741,7 +741,7 @@ describe("ProjectService", () => {
       repository.save.mockRejectedValue(error);
 
       await expect(
-        service.handleTransferTerminated(transferSessionId, true),
+        service.handleTransferTerminated({ transferSessionId, failed: true }),
       ).rejects.toThrow(error);
     });
   });
@@ -768,9 +768,9 @@ describe("ProjectService", () => {
       const error = new Error("Transfer session not found");
       transferSessionService.findById.mockRejectedValue(error);
 
-      await expect(service.handleTransferSuccess("transfer-1")).rejects.toThrow(
-        error,
-      );
+      await expect(
+        service.handleTransferSuccess({ transferSessionId: "transfer-1" }),
+      ).rejects.toThrow(error);
 
       expect(repository.save).not.toHaveBeenCalled();
     });
@@ -784,9 +784,9 @@ describe("ProjectService", () => {
       const error = new Error("Save failed");
       repository.save.mockRejectedValue(error);
 
-      await expect(service.handleTransferSuccess("transfer-1")).rejects.toThrow(
-        error,
-      );
+      await expect(
+        service.handleTransferSuccess({ transferSessionId: "transfer-1" }),
+      ).rejects.toThrow(error);
     });
   });
 
