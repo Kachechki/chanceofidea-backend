@@ -394,7 +394,7 @@ describe("GithubService", () => {
         data: {},
       });
 
-      await service.finishGithubHandover(transferSessionId);
+      await service.finishGithubHandover({ transferSessionId });
 
       expect(transferSessionService.findById).toHaveBeenCalledWith(
         transferSessionId,
@@ -410,7 +410,7 @@ describe("GithubService", () => {
         data: {},
       });
 
-      await service.finishGithubHandover(transferSessionId);
+      await service.finishGithubHandover({ transferSessionId });
 
       expect(githubAccessService.get).toHaveBeenCalledWith(
         transferSession.applicant,
@@ -460,7 +460,7 @@ describe("GithubService", () => {
         data: {},
       });
 
-      await service.finishGithubHandover(transferSessionId);
+      await service.finishGithubHandover({ transferSessionId });
 
       expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.finished", {
         transferSessionId,
@@ -477,7 +477,7 @@ describe("GithubService", () => {
       );
 
       await expect(
-        service.finishGithubHandover(transferSessionId),
+        service.finishGithubHandover({ transferSessionId }),
       ).resolves.toBeUndefined();
 
       expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
@@ -508,7 +508,7 @@ describe("GithubService", () => {
       githubAccessService.get.mockRejectedValue(error);
 
       await expect(
-        service.finishGithubHandover(transferSessionId),
+        service.finishGithubHandover({ transferSessionId }),
       ).resolves.toBeUndefined();
 
       expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
@@ -525,7 +525,7 @@ describe("GithubService", () => {
       );
 
       await expect(
-        service.finishGithubHandover(transferSessionId),
+        service.finishGithubHandover({ transferSessionId }),
       ).resolves.toBeUndefined();
 
       expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {

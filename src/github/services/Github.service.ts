@@ -8,12 +8,13 @@ import { UserService } from "../../user/services/User.service";
 import { GithubAccessService } from "../../auth/services/GithubAccess.service";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
+import { type ITransferResultsPayload } from "../../types/TransferResultsPayload.interface";
 
 interface IGithubService {
   fetchRepositories(ownerId: string): Promise<IGithubRepository[]>;
   startGithubHandover(transferSessionId: string): Promise<void>;
   validateRepositry(data: IValidateRepositroy): Promise<boolean>;
-  finishGithubHandover(transferSessionId: string): Promise<void>;
+  finishGithubHandover(payload: ITransferResultsPayload): Promise<void>;
 }
 
 @Injectable()
@@ -107,9 +108,9 @@ export class GithubService implements IGithubService {
   }
 
   @OnEvent("transfer.success")
-  async finishGithubHandover(transferSessionId: string): Promise<void> {
+  async finishGithubHandover(payload: ITransferResultsPayload): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
-      transferSessionId,
+      payload.transferSessionId,
       {
         project: {
           owner: true,
@@ -171,7 +172,7 @@ This document was generated automatically upon confirmation of the successful re
       });
     } catch (error) {
       this.eventEmitter.emit("transfer.termiated", {
-        transferSessionId,
+        transferSessionId: payload.transferSessionId,
         failed: true,
       });
 
@@ -179,7 +180,7 @@ This document was generated automatically upon confirmation of the successful re
     }
 
     this.eventEmitter.emit("transfer.finished", {
-      transferSessionId,
+      transferSessionId: payload.transferSessionId,
     });
   }
 }

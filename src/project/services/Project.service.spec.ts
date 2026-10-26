@@ -706,10 +706,10 @@ describe("ProjectService", () => {
         };
         transferSessionService.findById.mockResolvedValue({ project });
 
-        await service.handleTransferTerminated(
+        await service.handleTransferTerminated({
           transferSessionId,
-          failed as boolean,
-        );
+          failed: failed as boolean,
+        });
 
         expect(transferSessionService.findById).toHaveBeenCalledWith(
           transferSessionId,
@@ -754,7 +754,7 @@ describe("ProjectService", () => {
       };
       transferSessionService.findById.mockResolvedValue({ project });
 
-      await service.handleTransferSuccess("transfer-1");
+      await service.handleTransferSuccess({ transferSessionId: "transfer-1" });
 
       expect(transferSessionService.findById).toHaveBeenCalledWith(
         "transfer-1",

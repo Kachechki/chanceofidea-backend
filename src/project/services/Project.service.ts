@@ -16,6 +16,7 @@ import { ISearchProjects } from "../../types/FindFilteredProjects.interface";
 import { OnEvent } from "@nestjs/event-emitter";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 import { Octokit } from "octokit";
+import { type ITransferResultsPayload } from "../../types/TransferResultsPayload.interface";
 
 interface IProjectSerice {
   create(data: ICreateProject): Promise<void>;
@@ -28,11 +29,8 @@ interface IProjectSerice {
   delete(id: string): Promise<void>;
   publish(id: string): Promise<void>;
   search(data: ISearchProjects): Promise<ProjectEntity[]>;
-  handleTransferTerminated(
-    transferSessionId: string,
-    failed: boolean,
-  ): Promise<void>;
-  handleTransferSuccess(transferSessionId: string): Promise<void>;
+  handleTransferTerminated(payload: ITransferResultsPayload): Promise<void>;
+  handleTransferSuccess(payload: ITransferResultsPayload): Promise<void>;
   findByUser(
     ownerId: string,
     relations: FindOptionsRelations<ProjectEntity>,
@@ -262,27 +260,26 @@ export class ProjectService implements IProjectSerice {
 
   @OnEvent("transfer.terminated")
   async handleTransferTerminated(
-    transferSessionId: string,
-    failed: boolean,
+    payload: ITransferResultsPayload,
   ): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
-      transferSessionId,
+      payload.transferSessionId,
       {
         project: true,
       },
     );
     const project = transferSession.project;
 
-    if (failed) project.status = ProjectStatusEnum.DRAFT;
+    if (payload.failed) project.status = ProjectStatusEnum.DRAFT;
     else project.status = ProjectStatusEnum.PUBLISHED;
 
     await this.repository.save(project);
   }
 
   @OnEvent("transfer.finished")
-  async handleTransferSuccess(transferSessionId: string): Promise<void> {
+  async handleTransferSuccess(payload: ITransferResultsPayload): Promise<void> {
     const transferSession = await this.transferSessionService.findById(
-      transferSessionId,
+      payload.transferSessionId,
       {
         project: true,
       },
