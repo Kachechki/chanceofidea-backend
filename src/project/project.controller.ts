@@ -61,7 +61,6 @@ export class ProjectController {
     });
   }
 
-  @UseGuards(AuthGuard)
   @Get()
   @ApiOperation({ summary: "Get a project by ID" })
   @ApiOkResponse({
@@ -76,7 +75,6 @@ export class ProjectController {
   })
   async get(
     @Query() dto: ProjectIdDto,
-    @Req() req: IRequestWithRefresh,
   ): Promise<ProjectDto> {
     const project = await this.projectService.findById(
       dto.id,
@@ -86,7 +84,6 @@ export class ProjectController {
         owner: true,
         tags: true,
       },
-      req.user.id,
     );
 
     return {
