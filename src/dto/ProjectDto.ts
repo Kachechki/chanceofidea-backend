@@ -59,7 +59,7 @@ export class ProjectDto {
     type: () => UserDto,
   })
   @IsOptional()
-  owner: UserDto;
+  owner?: UserDto;
 
   @ApiPropertyOptional({
     description: "Category assigned to the project",

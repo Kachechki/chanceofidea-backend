@@ -152,13 +152,6 @@ export class ApplicationController {
         id: entity.project.id,
         createdAt: entity.project.createdAt,
         description: entity.project.description,
-        owner: {
-          id: entity.project.owner.id,
-          bio: entity.project.owner.bio,
-          avatarUrl: entity.project.owner.avatarUrl,
-          createdAt: entity.project.owner.createdAt,
-          login: entity.project.owner.login,
-        },
         repositoryName: entity.project.repositoryName,
         status: entity.project.status,
         title: entity.project.title,
