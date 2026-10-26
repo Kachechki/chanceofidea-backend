@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
@@ -16,7 +17,7 @@ export class TransferSessionEntity {
   id: string;
 
   @JoinColumn()
-  @OneToOne(() => ProjectEntity, {
+  @ManyToOne(() => ProjectEntity, {
     onDelete: "SET NULL",
   })
   project: ProjectEntity;
