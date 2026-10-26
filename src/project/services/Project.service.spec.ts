@@ -642,7 +642,10 @@ describe("ProjectService", () => {
         searchQuery: "   ",
       } as any);
 
-      expect(queryBuilder.andWhere).not.toHaveBeenCalled();
+      expect(queryBuilder.andWhere).not.toHaveBeenCalledWith(
+        expect.stringContaining("searchWord"),
+        expect.anything(),
+      );
     });
 
     it("should return projects from the query builder", async () => {

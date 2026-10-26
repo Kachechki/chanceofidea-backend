@@ -199,7 +199,10 @@ export class ProjectService implements IProjectSerice {
     const query = this.repository
       .createQueryBuilder("project")
       .leftJoinAndSelect("project.category", "category")
-      .leftJoinAndSelect("project.tags", "tag");
+      .leftJoinAndSelect("project.tags", "tag")
+      .andWhere("project.status != :draftStatus", {
+        draftStatus: ProjectStatusEnum.DRAFT,
+      });
 
     if (categoryIds.length > 0) {
       query.andWhere("category.id IN (:...categoryIds)", {
