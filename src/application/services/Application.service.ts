@@ -125,40 +125,53 @@ export class ApplicationService implements IApplicationService {
   async accept(id: string): Promise<void> {
     const transferSessionId = await this.dataSource.transaction(
       async (manager) => {
-        const repository = manager.getRepository(ApplicationEntity);
+        const applicationRepository = manager.getRepository(ApplicationEntity);
         const projectRepository = manager.getRepository(ProjectEntity);
+        const transferSessionRepository = manager.getRepository(
+          TransferSessionEntity,
+        );
 
-        const acceptedApplicationExists = await repository.exists({
-          where: { status: ApplicationStatusEnum.ACCEPTED },
-          lock: { mode: "pessimistic_write" },
-        });
-
-        if (acceptedApplicationExists)
-          throw new ConflictException(
-            "One of the applications is already accepted",
-          );
-
-        const application = await repository.findOne({
+        const application = await applicationRepository.findOne({
           where: { id },
           relations: { project: true, applicant: true },
         });
 
-        if (!application) throw new NotFoundException("Application not found");
+        if (!application) {
+          throw new NotFoundException("Application not found");
+        }
+
+        // Serialize acceptance attempts for this project.
+        const project = await projectRepository.findOne({
+          where: { id: application.project.id },
+          lock: { mode: "pessimistic_write" },
+        });
+
+        if (!project) {
+          throw new NotFoundException("Project not found");
+        }
+
+        if (project.status === ProjectStatusEnum.TRANSFERRING) {
+          throw new BadRequestException("Project is already being transferred");
+        }
+
+        const acceptedApplicationExists = await applicationRepository.exists({
+          where: {
+            project: { id: project.id },
+            status: ApplicationStatusEnum.ACCEPTED,
+          },
+        });
+
+        if (acceptedApplicationExists) {
+          throw new ConflictException(
+            "One of the applications for this project is already accepted",
+          );
+        }
 
         application.status = ApplicationStatusEnum.ACCEPTED;
-        await repository.save(application);
-
-        const project = application.project;
-        if (project.status == ProjectStatusEnum.TRANSFERRING)
-          throw new BadRequestException("Project is already being transfered");
+        await applicationRepository.save(application);
 
         project.status = ProjectStatusEnum.TRANSFERRING;
-
         await projectRepository.save(project);
-
-        const transferSessionRepository = manager.getRepository(
-          TransferSessionEntity,
-        );
 
         const transferSession = await transferSessionRepository.save({
           applicant: application.applicant,
