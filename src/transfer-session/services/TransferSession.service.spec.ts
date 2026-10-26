@@ -146,7 +146,10 @@ describe("TransferSessionService", () => {
       const session = { ...transferSession };
       repository.findOne.mockResolvedValue(session);
 
-      await service.handleTransferTerminated("transfer-1", true);
+      await service.handleTransferTerminated({
+        transferSessionId: "transfer-1",
+        failed: true,
+      });
 
       expect(session.status).toBe(TransferSessionStatusEnum.FAILED);
       expect(repository.save).toHaveBeenCalledWith(session);
@@ -156,7 +159,10 @@ describe("TransferSessionService", () => {
       const session = { ...transferSession };
       repository.findOne.mockResolvedValue(session);
 
-      await service.handleTransferTerminated("transfer-1", false);
+      await service.handleTransferTerminated({
+        transferSessionId: "transfer-1",
+        failed: false,
+      });
 
       expect(session.status).toBe(TransferSessionStatusEnum.CANCELED);
       expect(repository.save).toHaveBeenCalledWith(session);
@@ -166,7 +172,10 @@ describe("TransferSessionService", () => {
       repository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.handleTransferTerminated("missing-id", true),
+        service.handleTransferTerminated({
+          transferSessionId: "missing-id",
+          failed: true,
+        }),
       ).rejects.toThrow(new NotFoundException("Transfer session not found"));
 
       expect(repository.save).not.toHaveBeenCalled();
@@ -178,7 +187,10 @@ describe("TransferSessionService", () => {
       repository.save.mockRejectedValue(error);
 
       await expect(
-        service.handleTransferTerminated("transfer-1", true),
+        service.handleTransferTerminated({
+          transferSessionId: "transfer-1",
+          failed: true,
+        }),
       ).rejects.toThrow(error);
     });
   });
@@ -188,7 +200,7 @@ describe("TransferSessionService", () => {
       const session = { ...transferSession };
       repository.findOne.mockResolvedValue(session);
 
-      await service.handleTransferSuccess("transfer-1");
+      await service.handleTransferSuccess({ transferSessionId: "transfer-1" });
 
       expect(session.status).toBe(TransferSessionStatusEnum.FINISHED);
       expect(repository.save).toHaveBeenCalledWith(session);
@@ -197,9 +209,9 @@ describe("TransferSessionService", () => {
     it("should throw NotFoundException if the session does not exist", async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.handleTransferSuccess("missing-id")).rejects.toThrow(
-        new NotFoundException("Transfer session not found"),
-      );
+      await expect(
+        service.handleTransferSuccess({ transferSessionId: "missing-id" }),
+      ).rejects.toThrow(new NotFoundException("Transfer session not found"));
     });
 
     it("should propagate errors when saving the updated session fails", async () => {
@@ -207,9 +219,9 @@ describe("TransferSessionService", () => {
       const error = new Error("Database error");
       repository.save.mockRejectedValue(error);
 
-      await expect(service.handleTransferSuccess("transfer-1")).rejects.toThrow(
-        error,
-      );
+      await expect(
+        service.handleTransferSuccess({ transferSessionId: "transfer-1" }),
+      ).rejects.toThrow(error);
     });
   });
 

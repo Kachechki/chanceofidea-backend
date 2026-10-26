@@ -11,6 +11,7 @@ import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { TransferSessionStatusEnum } from "../../enums/TransferSessionStatusEnum.status";
 import { UserService } from "../../user/services/User.service";
 import { GithubService } from "../../github/services/Github.service";
+import { type ITransferResultsPayload } from "../../types/TransferResultsPayload.interface";
 
 interface ITransferSessionService {
   findById(
@@ -18,11 +19,8 @@ interface ITransferSessionService {
     relations: FindOptionsRelations<TransferSessionEntity>,
   ): Promise<TransferSessionEntity>;
   save(data: IUpdateTransferSession): Promise<void>;
-  handleTransferTerminated(
-    transferSessionId: string,
-    failed: boolean,
-  ): Promise<void>;
-  handleTransferSuccess(transferSessionId: string): Promise<void>;
+  handleTransferTerminated(payload: ITransferResultsPayload): Promise<void>;
+  handleTransferSuccess(payload: ITransferResultsPayload): Promise<void>;
   iHaveRecievedTheRepo(userId: string): Promise<void>;
   iDontWantTheRepo(userId: string): Promise<void>;
 }
@@ -61,20 +59,20 @@ export class TransferSessionService implements ITransferSessionService {
 
   @OnEvent("transfer.terminated")
   async handleTransferTerminated(
-    transferSessionId: string,
-    failed: boolean,
+    payload: ITransferResultsPayload,
   ): Promise<void> {
-    const transferSession = await this.findById(transferSessionId);
+    const transferSession = await this.findById(payload.transferSessionId);
 
-    if (failed) transferSession.status = TransferSessionStatusEnum.FAILED;
+    if (payload.failed)
+      transferSession.status = TransferSessionStatusEnum.FAILED;
     else transferSession.status = TransferSessionStatusEnum.CANCELED;
 
     await this.repository.save(transferSession);
   }
 
   @OnEvent("transfer.finished")
-  async handleTransferSuccess(transferSessionId: string): Promise<void> {
-    const transferSession = await this.findById(transferSessionId);
+  async handleTransferSuccess(payload: ITransferResultsPayload): Promise<void> {
+    const transferSession = await this.findById(payload.transferSessionId);
 
     transferSession.status = TransferSessionStatusEnum.FINISHED;
 
