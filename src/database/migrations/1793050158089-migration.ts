@@ -18,7 +18,6 @@ export class Migration1793050158089 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "user_entity" ADD "githubAccessTokenId" uuid`);
         await queryRunner.query(`ALTER TABLE "user_entity" ADD CONSTRAINT "UQ_46a02401a293fc5789d83c77627" UNIQUE ("githubAccessTokenId")`);
         await queryRunner.query(`ALTER TABLE "transfer_session_entity" DROP CONSTRAINT "FK_4ba59c1e8cb1bb9d4bc769a9c08"`);
-        await queryRunner.query(`ALTER TABLE "transfer_session_entity" DROP CONSTRAINT "REL_4ba59c1e8cb1bb9d4bc769a9c0"`);
         await queryRunner.query(`ALTER TABLE "user_entity" ADD CONSTRAINT "FK_46a02401a293fc5789d83c77627" FOREIGN KEY ("githubAccessTokenId") REFERENCES "github_access_entity"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "transfer_session_entity" ADD CONSTRAINT "FK_4ba59c1e8cb1bb9d4bc769a9c08" FOREIGN KEY ("applicantId") REFERENCES "user_entity"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
     }
