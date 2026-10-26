@@ -31,7 +31,7 @@ export class ProjectEntity {
   @Column()
   description: string;
 
-  @Column({ update: false, unique: true })
+  @Column({ update: false })
   repositoryName: string;
 
   @Column({ type: "timestamptz", update: false })
