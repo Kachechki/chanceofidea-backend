@@ -108,7 +108,7 @@ describe("ProjectController", () => {
       projectService.findById.mockResolvedValue(project);
 
       await expect(
-        controller.get({ id: "project-1" } as any, req),
+        controller.get({ id: "project-1" } as any),
       ).resolves.toEqual({
         id: project.id,
         title: project.title,
@@ -139,7 +139,7 @@ describe("ProjectController", () => {
       projectService.findById.mockRejectedValue(error);
 
       await expect(
-        controller.get({ id: "missing-project" } as any, req),
+        controller.get({ id: "missing-project" } as any),
       ).rejects.toThrow(error);
     });
   });
