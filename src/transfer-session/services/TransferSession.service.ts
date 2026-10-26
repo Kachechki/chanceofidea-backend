@@ -82,8 +82,11 @@ export class TransferSessionService implements ITransferSessionService {
   async iHaveRecievedTheRepo(userId: string): Promise<void> {
     const applicant = await this.userService.findById(userId);
 
-    const transferSession = await this.repository.findOneBy({
-      applicant: { id: applicant.id },
+    const transferSession = await this.repository.findOne({
+      where: { applicant: { id: applicant.id } },
+      relations: {
+        project: true,
+      },
     });
     if (!transferSession)
       throw new NotFoundException("Transfer session not found");
