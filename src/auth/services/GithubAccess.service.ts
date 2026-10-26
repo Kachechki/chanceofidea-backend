@@ -42,7 +42,9 @@ export class GithubAccessService implements IGithubAccessService {
   }
 
   async get(user: UserEntity): Promise<string> {
-    const accessToken = await this.repository.findOneBy({ user });
+    const accessToken = await this.repository.findOneBy({
+      user: { id: user.id },
+    });
     if (!accessToken) throw new UnauthorizedException("No github access token");
 
     return this.encryptionService.decrypt(accessToken.githubAccessToken);
