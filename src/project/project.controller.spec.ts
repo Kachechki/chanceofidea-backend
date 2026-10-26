@@ -82,6 +82,10 @@ describe("ProjectController", () => {
   });
 
   describe("get", () => {
+    const req = {
+      user: { id: "user-1" },
+    } as any;
+
     it("should find a project with its required relations", async () => {
       const project = {
         id: "project-1",
@@ -103,27 +107,31 @@ describe("ProjectController", () => {
 
       projectService.findById.mockResolvedValue(project);
 
-      await expect(controller.get({ id: "project-1" } as any)).resolves.toEqual(
-        {
-          id: project.id,
-          title: project.title,
-          category: project.category,
-          createdAt: project.createdAt,
-          description: project.description,
-          owner: project.owner,
-          repositoryName: project.repositoryName,
-          status: project.status,
-          tags: project.tags,
-        },
-      );
+      await expect(
+        controller.get({ id: "project-1" } as any, req),
+      ).resolves.toEqual({
+        id: project.id,
+        title: project.title,
+        category: project.category,
+        createdAt: project.createdAt,
+        description: project.description,
+        owner: project.owner,
+        repositoryName: project.repositoryName,
+        status: project.status,
+        tags: project.tags,
+      });
 
       expect(projectService.findById).toHaveBeenCalledTimes(1);
-      expect(projectService.findById).toHaveBeenCalledWith("project-1", {
-        applications: true,
-        category: true,
-        owner: true,
-        tags: true,
-      });
+      expect(projectService.findById).toHaveBeenCalledWith(
+        "project-1",
+        {
+          applications: true,
+          category: true,
+          owner: true,
+          tags: true,
+        },
+        "user-1",
+      );
     });
 
     it("should propagate errors from ProjectService", async () => {
@@ -131,7 +139,7 @@ describe("ProjectController", () => {
       projectService.findById.mockRejectedValue(error);
 
       await expect(
-        controller.get({ id: "missing-project" } as any),
+        controller.get({ id: "missing-project" } as any, req),
       ).rejects.toThrow(error);
     });
   });
