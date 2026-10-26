@@ -35,6 +35,7 @@ describe("ApplicationService", () => {
   };
 
   let projectRepository: {
+    findOne: jest.Mock;
     findOneOrFail: jest.Mock;
     save: jest.Mock;
   };
@@ -94,6 +95,7 @@ describe("ApplicationService", () => {
     };
 
     projectRepository = {
+      findOne: jest.fn().mockImplementation(async () => ({ ...project })),
       findOneOrFail: jest.fn().mockResolvedValue(project),
       save: jest.fn().mockImplementation(async (value) => value),
     };
@@ -369,9 +371,16 @@ describe("ApplicationService", () => {
     it("accepts the application and starts a transfer session", async () => {
       await service.accept(applicationId);
 
-      expect(transactionApplicationRepository.exists).toHaveBeenCalledWith({
-        where: { status: ApplicationStatusEnum.ACCEPTED },
+      expect(projectRepository.findOne).toHaveBeenCalledWith({
+        where: { id: projectId },
         lock: { mode: "pessimistic_write" },
+      });
+
+      expect(transactionApplicationRepository.exists).toHaveBeenCalledWith({
+        where: {
+          project: { id: projectId },
+          status: ApplicationStatusEnum.ACCEPTED,
+        },
       });
 
       expect(transactionApplicationRepository.save).toHaveBeenCalledWith(
@@ -400,18 +409,6 @@ describe("ApplicationService", () => {
       });
     });
 
-    it("throws ConflictException if another application is already accepted", async () => {
-      transactionApplicationRepository.exists.mockResolvedValue(true);
-
-      await expect(service.accept(applicationId)).rejects.toThrow(
-        new ConflictException("One of the applications is already accepted"),
-      );
-
-      expect(transactionApplicationRepository.findOne).not.toHaveBeenCalled();
-      expect(transferSessionRepository.save).not.toHaveBeenCalled();
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
-    });
-
     it("throws NotFoundException when the application does not exist", async () => {
       transactionApplicationRepository.findOne.mockResolvedValue(null);
 
@@ -423,20 +420,51 @@ describe("ApplicationService", () => {
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
-    it("rejects a project that is already being transferred", async () => {
-      transactionApplicationRepository.findOne.mockResolvedValue({
-        ...application,
-        project: {
-          ...project,
-          status: ProjectStatusEnum.TRANSFERRING,
+    it("throws NotFoundException when the project does not exist", async () => {
+      projectRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.accept(applicationId)).rejects.toThrow(
+        new NotFoundException("Project not found"),
+      );
+
+      expect(transactionApplicationRepository.save).not.toHaveBeenCalled();
+      expect(transferSessionRepository.save).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it("throws ConflictException if an application for the same project is already accepted", async () => {
+      transactionApplicationRepository.exists.mockResolvedValue(true);
+
+      await expect(service.accept(applicationId)).rejects.toThrow(
+        new ConflictException(
+          "One of the applications for this project is already accepted",
+        ),
+      );
+
+      expect(transactionApplicationRepository.exists).toHaveBeenCalledWith({
+        where: {
+          project: { id: projectId },
+          status: ApplicationStatusEnum.ACCEPTED,
         },
-        applicant: { ...applicant },
+      });
+
+      expect(transactionApplicationRepository.save).not.toHaveBeenCalled();
+      expect(transferSessionRepository.save).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it("rejects a project that is already being transferred", async () => {
+      projectRepository.findOne.mockResolvedValue({
+        ...project,
+        status: ProjectStatusEnum.TRANSFERRING,
       });
 
       await expect(service.accept(applicationId)).rejects.toThrow(
-        new BadRequestException("Project is already being transfered"),
+        new BadRequestException("Project is already being transferred"),
       );
 
+      expect(transactionApplicationRepository.exists).not.toHaveBeenCalled();
+      expect(transactionApplicationRepository.save).not.toHaveBeenCalled();
       expect(transferSessionRepository.save).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });

@@ -55,7 +55,7 @@ export class TransferSessionService implements ITransferSessionService {
     await this.repository.save({
       id: data.id,
       status: data.status,
-      createdAt: data.createdAt
+      createdAt: data.createdAt,
     });
   }
 
@@ -84,7 +84,9 @@ export class TransferSessionService implements ITransferSessionService {
   async iHaveRecievedTheRepo(userId: string): Promise<void> {
     const applicant = await this.userService.findById(userId);
 
-    const transferSession = await this.repository.findOneBy({ applicant });
+    const transferSession = await this.repository.findOneBy({
+      applicant: { id: applicant.id },
+    });
     if (!transferSession)
       throw new NotFoundException("Transfer session not found");
 
@@ -106,7 +108,7 @@ export class TransferSessionService implements ITransferSessionService {
   async iDontWantTheRepo(userId: string): Promise<void> {
     const applicant = await this.userService.findById(userId);
     const transferSession = await this.repository.findOne({
-      where: { applicant },
+      where: { applicant: { id: applicant.id } },
       relations: { project: true },
     });
     if (!transferSession)

@@ -224,7 +224,9 @@ describe("TransferSessionService", () => {
       await service.iHaveRecievedTheRepo("user-1");
 
       expect(userService.findById).toHaveBeenCalledWith("user-1");
-      expect(repository.findOneBy).toHaveBeenCalledWith({ applicant });
+      expect(repository.findOneBy).toHaveBeenCalledWith({
+        applicant: { id: applicant.id },
+      });
       expect(githubService.validateRepositry).toHaveBeenCalledWith({
         ownerLogin: applicant.login,
         repositoryName: project.repositoryName,
@@ -288,7 +290,7 @@ describe("TransferSessionService", () => {
 
       expect(userService.findById).toHaveBeenCalledWith("user-1");
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { applicant },
+        where: { applicant: { id: applicant.id } },
         relations: { project: true },
       });
       expect(githubService.validateRepositry).toHaveBeenCalledWith({
