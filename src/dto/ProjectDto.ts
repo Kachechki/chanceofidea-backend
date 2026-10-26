@@ -66,7 +66,7 @@ export class ProjectDto {
     type: () => CategoryDto,
   })
   @IsOptional()
-  category: CategoryDto;
+  category?: CategoryDto;
 
   @ApiPropertyOptional({
     description: "Tags associated with the project",
@@ -74,5 +74,5 @@ export class ProjectDto {
     isArray: true,
   })
   @IsOptional()
-  tags: TagDto[];
+  tags?: TagDto[];
 }

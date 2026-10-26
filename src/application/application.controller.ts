@@ -150,11 +150,6 @@ export class ApplicationController {
       rejectReason: entity.rejectReason,
       project: {
         id: entity.project.id,
-        category: {
-          id: entity.project.category.id,
-          name: entity.project.category.name,
-          slug: entity.project.category.slug,
-        },
         createdAt: entity.project.createdAt,
         description: entity.project.description,
         owner: {
@@ -166,7 +161,6 @@ export class ApplicationController {
         },
         repositoryName: entity.project.repositoryName,
         status: entity.project.status,
-        tags: entity.project.tags,
         title: entity.project.title,
       },
     }));
