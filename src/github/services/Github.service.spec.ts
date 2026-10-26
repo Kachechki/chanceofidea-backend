@@ -425,7 +425,7 @@ describe("GithubService", () => {
         data: {},
       });
 
-      await service.finishGithubHandover(transferSessionId);
+      await service.finishGithubHandover({ transferSessionId });
 
       expect(
         getOctokit().rest.repos.createOrUpdateFileContents,
@@ -496,7 +496,7 @@ describe("GithubService", () => {
       transferSessionService.findById.mockRejectedValue(error);
 
       await expect(
-        service.finishGithubHandover(transferSessionId),
+        service.finishGithubHandover({ transferSessionId }),
       ).rejects.toThrow(error);
 
       expect(githubAccessService.get).not.toHaveBeenCalled();
