@@ -130,7 +130,6 @@ describe("ProjectController", () => {
           owner: true,
           tags: true,
         },
-        "user-1",
       );
     });
 
