@@ -106,7 +106,7 @@ export class TransferSessionService implements ITransferSessionService {
         repositoryName: transferSession.project.repositoryName,
       }))
     ) {
-      await this.eventEmitter.emit("transfer.terminated", {
+      await this.eventEmitter.emitAsync("transfer.terminated", {
         transferSessionId: transferSession.id,
         failed: false,
       });
@@ -116,7 +116,7 @@ export class TransferSessionService implements ITransferSessionService {
       );
     }
 
-    this.eventEmitter.emit("transfer.success", {
+    await this.eventEmitter.emitAsync("transfer.success", {
       transferSessionId: transferSession.id,
     });
   }
@@ -141,7 +141,7 @@ export class TransferSessionService implements ITransferSessionService {
         repositoryName: transferSession.project.repositoryName,
       })
     ) {
-      this.eventEmitter.emit("transfer.success", {
+      await this.eventEmitter.emitAsync("transfer.success", {
         transferSessionId: transferSession.id,
       });
 
@@ -150,7 +150,7 @@ export class TransferSessionService implements ITransferSessionService {
       );
     }
 
-    this.eventEmitter.emit("transfer.terminated", {
+    await this.eventEmitter.emitAsync("transfer.terminated", {
       transferSessionId: transferSession.id,
       failed: false,
     });

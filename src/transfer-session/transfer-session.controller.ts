@@ -1,4 +1,12 @@
-import { Controller, Post, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -23,6 +31,7 @@ export class TransferSessionController {
   ) {}
 
   @Post("i-have-recieved")
+  @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)
   @ApiOperation({
     summary: "Confirm repository receipt",
@@ -46,10 +55,14 @@ export class TransferSessionController {
     @Req() req: IRequestWithRefresh,
     @Query() dto: FinishTransferDto,
   ): Promise<void> {
-    await this.transferSessionService.iHaveRecievedTheRepo(req.user.id, dto.applicationId);
+    await this.transferSessionService.iHaveRecievedTheRepo(
+      req.user.id,
+      dto.applicationId,
+    );
   }
 
   @Post("i-dont-want")
+  @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)
   @ApiOperation({
     summary: "Decline repository transfer",
@@ -72,6 +85,9 @@ export class TransferSessionController {
     @Req() req: IRequestWithRefresh,
     @Query() dto: FinishTransferDto,
   ): Promise<void> {
-    await this.transferSessionService.iDontWantTheRepo(req.user.id, dto.applicationId);
+    await this.transferSessionService.iDontWantTheRepo(
+      req.user.id,
+      dto.applicationId,
+    );
   }
 }

@@ -15,7 +15,7 @@ type MockRepository = {
 describe("TransferSessionService", () => {
   let service: TransferSessionService;
   let repository: MockRepository;
-  let eventEmitter: { emit: jest.Mock };
+  let eventEmitter: { emitAsync: jest.Mock };
   let userService: { findById: jest.Mock };
   let githubService: { validateRepositry: jest.Mock };
 
@@ -46,7 +46,7 @@ describe("TransferSessionService", () => {
     };
 
     eventEmitter = {
-      emit: jest.fn(),
+      emitAsync: jest.fn().mockResolvedValue([]),
     };
 
     userService = {
@@ -238,13 +238,13 @@ describe("TransferSessionService", () => {
       expect(userService.findById).toHaveBeenCalledWith("user-1");
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { applicant: { applications: { id: applicationId } } },
-        relations: { project: true },
+        relations: { project: true, applicant: true },
       });
       expect(githubService.validateRepositry).toHaveBeenCalledWith({
         ownerLogin: applicant.login,
         repositoryName: project.repositoryName,
       });
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.success", {
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith("transfer.success", {
         transferSessionId: transferSession.id,
       });
     });
@@ -254,12 +254,10 @@ describe("TransferSessionService", () => {
 
       await expect(
         service.iHaveRecievedTheRepo("user-1", applicationId),
-      ).rejects.toThrow(
-        new NotFoundException("Transfer session not found"),
-      );
+      ).rejects.toThrow(new NotFoundException("Transfer session not found"));
 
       expect(githubService.validateRepositry).not.toHaveBeenCalled();
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it("should throw NotAcceptableException if the repository transfer has not been accepted", async () => {
@@ -273,10 +271,13 @@ describe("TransferSessionService", () => {
         ),
       );
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.terminated", {
-        transferSessionId: transferSession.id,
-        failed: false,
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "transfer.terminated",
+        {
+          transferSessionId: transferSession.id,
+          failed: false,
+        },
+      );
     });
 
     it("should propagate errors from UserService", async () => {
@@ -311,16 +312,19 @@ describe("TransferSessionService", () => {
       expect(userService.findById).toHaveBeenCalledWith("user-1");
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { applicant: { applications: { id: applicationId } } },
-        relations: { project: true },
+        relations: { project: true, applicant: true },
       });
       expect(githubService.validateRepositry).toHaveBeenCalledWith({
         ownerLogin: applicant.login,
         repositoryName: project.repositoryName,
       });
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.terminated", {
-        transferSessionId: transferSession.id,
-        failed: false,
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "transfer.terminated",
+        {
+          transferSessionId: transferSession.id,
+          failed: false,
+        },
+      );
     });
 
     it("should throw NotFoundException if no transfer session exists", async () => {
@@ -331,7 +335,7 @@ describe("TransferSessionService", () => {
       ).rejects.toThrow(new NotFoundException("Transfer session not found"));
 
       expect(githubService.validateRepositry).not.toHaveBeenCalled();
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it("should throw NotAcceptableException if the applicant has already accepted the repository", async () => {
@@ -345,7 +349,7 @@ describe("TransferSessionService", () => {
         ),
       );
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.success", {
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith("transfer.success", {
         transferSessionId: transferSession.id,
       });
     });

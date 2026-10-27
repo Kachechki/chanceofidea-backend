@@ -8,6 +8,7 @@ type MockOctokit = {
       listForAuthenticatedUser: jest.Mock;
       transfer: jest.Mock;
       get: jest.Mock;
+      getContent: jest.Mock;
       createOrUpdateFileContents: jest.Mock;
     };
   };
@@ -20,6 +21,7 @@ const mockOctokit: MockOctokit = {
       listForAuthenticatedUser: jest.fn(),
       transfer: jest.fn(),
       get: jest.fn(),
+      getContent: jest.fn(),
       createOrUpdateFileContents: jest.fn(),
     },
   },
@@ -44,7 +46,7 @@ describe("GithubService", () => {
   let userService: { findById: jest.Mock };
   let githubAccessService: { get: jest.Mock };
   let transferSessionService: { findById: jest.Mock };
-  let eventEmitter: { emit: jest.Mock };
+  let eventEmitter: { emit: jest.Mock; emitAsync: jest.Mock };
 
   const getOctokit = (): MockOctokit => mockOctokit;
 
@@ -81,6 +83,9 @@ describe("GithubService", () => {
     Octokit.mockImplementation(() => mockOctokit);
     mockOctokit.paginate.mockReset();
     Object.values(mockOctokit.rest.repos).forEach((mock) => mock.mockReset());
+    mockOctokit.rest.repos.getContent.mockRejectedValue(
+      Object.assign(new Error("Not found"), { status: 404 }),
+    );
 
     userService = {
       findById: jest.fn(),
@@ -96,6 +101,7 @@ describe("GithubService", () => {
 
     eventEmitter = {
       emit: jest.fn(),
+      emitAsync: jest.fn().mockResolvedValue([]),
     };
 
     const module = await Test.createTestingModule({
@@ -281,10 +287,13 @@ describe("GithubService", () => {
         service.startGithubHandover({ transferSessionId }),
       ).rejects.toThrow(error);
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
-        transferSessionId,
-        failed: true,
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "transfer.terminated",
+        {
+          transferSessionId,
+          failed: true,
+        },
+      );
     });
 
     it("should not emit a termination event when the transfer succeeds", async () => {
@@ -292,7 +301,7 @@ describe("GithubService", () => {
 
       await service.startGithubHandover({ transferSessionId });
 
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it("should propagate errors from TransferSessionService", async () => {
@@ -435,7 +444,7 @@ describe("GithubService", () => {
           repo: "my-project",
           path: "TRANSFER.md",
           message:
-            "Create TRANSFER.md after repository transfer (by Chance of Idea team)",
+            "Create TRANSFER.md after repository transfer (by Chance of Idea)",
           content: expect.any(String),
         }),
       );
@@ -462,7 +471,7 @@ describe("GithubService", () => {
 
       await service.finishGithubHandover({ transferSessionId });
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.finished", {
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith("transfer.finished", {
         transferSessionId,
       });
     });
@@ -478,14 +487,17 @@ describe("GithubService", () => {
 
       await expect(
         service.finishGithubHandover({ transferSessionId }),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow(error);
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
-        transferSessionId,
-        failed: true,
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "transfer.terminated",
+        {
+          transferSessionId,
+          failed: true,
+        },
+      );
 
-      expect(eventEmitter.emit).not.toHaveBeenCalledWith(
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
         "transfer.finished",
         expect.anything(),
       );
@@ -509,12 +521,15 @@ describe("GithubService", () => {
 
       await expect(
         service.finishGithubHandover({ transferSessionId }),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow(error);
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
-        transferSessionId,
-        failed: true,
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "transfer.terminated",
+        {
+          transferSessionId,
+          failed: true,
+        },
+      );
     });
 
     it("should handle network errors when creating TRANSFER.md", async () => {
@@ -526,12 +541,15 @@ describe("GithubService", () => {
 
       await expect(
         service.finishGithubHandover({ transferSessionId }),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow(error);
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith("transfer.termiated", {
-        transferSessionId,
-        failed: true,
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "transfer.terminated",
+        {
+          transferSessionId,
+          failed: true,
+        },
+      );
     });
   });
 });

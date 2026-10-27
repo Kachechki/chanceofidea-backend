@@ -74,7 +74,7 @@ export class GithubService implements IGithubService {
 
       transferSession.project.status = ProjectStatusEnum.TRANSFERRING;
     } catch (error) {
-      this.eventEmitter.emit("transfer.termiated", {
+      await this.eventEmitter.emitAsync("transfer.terminated", {
         transferSessionId: payload.transferSessionId,
         failed: true,
       });
@@ -197,15 +197,15 @@ This document was generated automatically upon confirmation of the successful re
         ...(sha ? { sha } : {}),
       });
     } catch (error) {
-      this.eventEmitter.emit("transfer.termiated", {
+      await this.eventEmitter.emitAsync("transfer.terminated", {
         transferSessionId: payload.transferSessionId,
         failed: true,
       });
 
-      return;
+      throw error;
     }
 
-    this.eventEmitter.emit("transfer.finished", {
+    await this.eventEmitter.emitAsync("transfer.finished", {
       transferSessionId: payload.transferSessionId,
     });
   }
