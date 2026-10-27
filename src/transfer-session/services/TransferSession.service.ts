@@ -89,6 +89,7 @@ export class TransferSessionService implements ITransferSessionService {
       where: { applicant: { applications: { id: applicationId } } },
       relations: {
         project: true,
+        applicant: true,
       },
     });
     if (!transferSession)
@@ -124,7 +125,7 @@ export class TransferSessionService implements ITransferSessionService {
     const applicant = await this.userService.findById(userId);
     const transferSession = await this.repository.findOne({
       where: { applicant: { applications: { id: applicationId } } },
-      relations: { project: true },
+      relations: { project: true, applicant: true },
     });
     if (!transferSession)
       throw new NotFoundException("Transfer session not found");
