@@ -73,8 +73,11 @@ export class TransferSessionService implements ITransferSessionService {
   @OnEvent("transfer.finished")
   async handleTransferSuccess(payload: ITransferResultsPayload): Promise<void> {
     const transferSession = await this.findById(payload.transferSessionId);
+    console.log("\n\n");
+    console.log(transferSession);
 
     transferSession.status = TransferSessionStatusEnum.FINISHED;
+    console.log("Changing transfer session status");
 
     await this.repository.save(transferSession);
   }
