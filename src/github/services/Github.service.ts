@@ -207,6 +207,8 @@ This document was generated automatically upon confirmation of the successful re
       throw error;
     }
 
+
+    console.log("transfer.finished")
     await this.eventEmitter.emitAsync("transfer.finished", {
       transferSessionId: payload.transferSessionId,
     });
