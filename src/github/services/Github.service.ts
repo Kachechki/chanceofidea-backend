@@ -159,42 +159,16 @@ This document was generated automatically upon confirmation of the successful re
 
     try {
       const accessToken = await this.githubAccessService.get(newOwner);
+
       const octokit = this.createOctokit(accessToken);
-
-      let sha: string | undefined;
-
-      try {
-        const { data } = await octokit.rest.repos.getContent({
-          owner: newOwner.login,
-          repo: project.repositoryName,
-          path: "TRANSFER.md",
-        });
-
-        // getContent can return an array for directories.
-        if (!Array.isArray(data) && data.type === "file") {
-          sha = data.sha;
-        }
-      } catch (error: unknown) {
-        if (
-          typeof error !== "object" ||
-          error === null ||
-          !("status" in error) ||
-          error.status !== 404
-        ) {
-          throw error;
-        }
-        // File doesn't exist, so create it.
-      }
 
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: newOwner.login,
         repo: project.repositoryName,
         path: "TRANSFER.md",
-        message: sha
-          ? "Update TRANSFER.md after repository transfer (by Chance of Idea)"
-          : "Create TRANSFER.md after repository transfer (by Chance of Idea)",
+        message:
+          "Create TRANSFER.md after repository transfer (by Chance of Idea team)",
         content: Buffer.from(text, "utf8").toString("base64"),
-        ...(sha ? { sha } : {}),
       });
     } catch (error) {
       this.eventEmitter.emit("transfer.termiated", {
