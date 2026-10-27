@@ -121,6 +121,8 @@ export class GithubService implements IGithubService {
       },
     );
 
+    console.log(transferSession);
+
     const project = transferSession.project;
     const previousOwner = project.owner;
     const newOwner = transferSession.applicant;
