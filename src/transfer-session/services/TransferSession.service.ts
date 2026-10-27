@@ -21,8 +21,8 @@ interface ITransferSessionService {
   save(data: IUpdateTransferSession): Promise<void>;
   handleTransferTerminated(payload: ITransferResultsPayload): Promise<void>;
   handleTransferSuccess(payload: ITransferResultsPayload): Promise<void>;
-  iHaveRecievedTheRepo(userId: string): Promise<void>;
-  iDontWantTheRepo(userId: string): Promise<void>;
+  iHaveRecievedTheRepo(userId: string, applicationId: string): Promise<void>;
+  iDontWantTheRepo(userId: string, applicationId: string): Promise<void>;
 }
 
 @Injectable()
@@ -79,17 +79,25 @@ export class TransferSessionService implements ITransferSessionService {
     await this.repository.save(transferSession);
   }
 
-  async iHaveRecievedTheRepo(userId: string): Promise<void> {
+  async iHaveRecievedTheRepo(
+    userId: string,
+    applicationId: string,
+  ): Promise<void> {
     const applicant = await this.userService.findById(userId);
 
     const transferSession = await this.repository.findOne({
-      where: { applicant: { id: applicant.id } },
+      where: { applicant: { applications: { id: applicationId } } },
       relations: {
         project: true,
       },
     });
     if (!transferSession)
       throw new NotFoundException("Transfer session not found");
+
+    if (transferSession.applicant.id !== applicant.id)
+      throw new NotAcceptableException(
+        "Not allowed to decide for someone else",
+      );
 
     if (
       !(await this.githubService.validateRepositry({
@@ -112,14 +120,19 @@ export class TransferSessionService implements ITransferSessionService {
     });
   }
 
-  async iDontWantTheRepo(userId: string): Promise<void> {
+  async iDontWantTheRepo(userId: string, applicationId: string): Promise<void> {
     const applicant = await this.userService.findById(userId);
     const transferSession = await this.repository.findOne({
-      where: { applicant: { id: applicant.id } },
+      where: { applicant: { applications: { id: applicationId } } },
       relations: { project: true },
     });
     if (!transferSession)
       throw new NotFoundException("Transfer session not found");
+
+    if (transferSession.applicant.id !== applicant.id)
+      throw new NotAcceptableException(
+        "Not allowed to decide for someone else",
+      );
 
     if (
       await this.githubService.validateRepositry({
@@ -128,7 +141,7 @@ export class TransferSessionService implements ITransferSessionService {
       })
     ) {
       this.eventEmitter.emit("transfer.success", {
-        transferSessionid: transferSession.id,
+        transferSessionId: transferSession.id,
       });
 
       throw new NotAcceptableException(

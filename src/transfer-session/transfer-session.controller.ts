@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UseGuards } from "@nestjs/common";
+import { Controller, Post, Query, Req, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -12,6 +12,7 @@ import {
 import { TransferSessionService } from "./services/TransferSession.service";
 import { AuthGuard } from "../auth/guards/Auth.guard";
 import { type IRequestWithRefresh } from "../types/RequestWithRefresh.interface";
+import { FinishTransferDto } from "../dto/FinishTransfer.dto";
 
 @ApiTags("Transfer Sessions")
 @ApiBearerAuth()
@@ -43,8 +44,9 @@ export class TransferSessionController {
   })
   async iHaveRecievedTheRepository(
     @Req() req: IRequestWithRefresh,
+    @Query() dto: FinishTransferDto,
   ): Promise<void> {
-    await this.transferSessionService.iHaveRecievedTheRepo(req.user.id);
+    await this.transferSessionService.iHaveRecievedTheRepo(req.user.id, dto.applicationId);
   }
 
   @Post("i-dont-want")
@@ -66,7 +68,10 @@ export class TransferSessionController {
   @ApiConflictResponse({
     description: "The transfer session cannot be declined in its current state",
   })
-  async iDontWantTheRepository(@Req() req: IRequestWithRefresh): Promise<void> {
-    await this.transferSessionService.iDontWantTheRepo(req.user.id);
+  async iDontWantTheRepository(
+    @Req() req: IRequestWithRefresh,
+    @Query() dto: FinishTransferDto,
+  ): Promise<void> {
+    await this.transferSessionService.iDontWantTheRepo(req.user.id, dto.applicationId);
   }
 }
