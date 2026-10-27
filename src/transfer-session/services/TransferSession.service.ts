@@ -78,11 +78,8 @@ export class TransferSessionService implements ITransferSessionService {
       applicant: true,
       project: true,
     });
-    console.log("\n\n");
-    console.log(transferSession);
 
     transferSession.status = TransferSessionStatusEnum.FINISHED;
-    console.log("Changing transfer session status");
 
     await this.repository.save(transferSession);
   }

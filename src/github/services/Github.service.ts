@@ -121,8 +121,6 @@ export class GithubService implements IGithubService {
       },
     );
 
-    console.log(transferSession);
-
     const project = transferSession.project;
     const previousOwner = project.owner;
     const newOwner = transferSession.applicant;
@@ -188,8 +186,6 @@ This document was generated automatically upon confirmation of the successful re
         // File doesn't exist, so create it.
       }
 
-      console.log("Creating or updating TRANSFER.md")
-
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: newOwner.login,
         repo: project.repositoryName,
@@ -209,8 +205,6 @@ This document was generated automatically upon confirmation of the successful re
       throw error;
     }
 
-
-    console.log("transfer.finished")
     await this.eventEmitter.emitAsync("transfer.finished", {
       transferSessionId: payload.transferSessionId,
     });
