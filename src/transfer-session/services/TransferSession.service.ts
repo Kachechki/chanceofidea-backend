@@ -12,6 +12,7 @@ import { TransferSessionStatusEnum } from "../../enums/TransferSessionStatusEnum
 import { UserService } from "../../user/services/User.service";
 import { GithubService } from "../../github/services/Github.service";
 import { type ITransferResultsPayload } from "../../types/TransferResultsPayload.interface";
+import { ApplicationService } from "../../application/services/Application.service";
 
 interface ITransferSessionService {
   findById(
@@ -33,6 +34,7 @@ export class TransferSessionService implements ITransferSessionService {
     private readonly eventEmitter: EventEmitter2,
     private readonly userService: UserService,
     private readonly githubService: GithubService,
+    private readonly applicationService: ApplicationService,
   ) {}
 
   async findById(
@@ -91,8 +93,20 @@ export class TransferSessionService implements ITransferSessionService {
   ): Promise<void> {
     const applicant = await this.userService.findById(userId);
 
+    const application = await this.applicationService.findById(applicationId, {
+      project: true,
+      applicant: true,
+    });
+
+    if (!application) {
+      throw new NotFoundException("Application not found");
+    }
+
     const transferSession = await this.repository.findOne({
-      where: { applicant: { applications: { id: applicationId } } },
+      where: {
+        project: { id: application.project.id },
+        applicant: { id: application.applicant.id },
+      },
       relations: {
         project: true,
         applicant: true,
