@@ -168,7 +168,6 @@ describe("ProjectService", () => {
       );
       expect(repository.find).toHaveBeenCalledWith({
         where: {
-          owner: { id: owner.id },
           repositoryName: data.repositoryName,
         },
       });

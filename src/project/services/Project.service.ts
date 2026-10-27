@@ -92,7 +92,6 @@ export class ProjectService implements IProjectSerice {
 
     const existingProjects = await this.repository.find({
       where: {
-        owner: { id: owner.id },
         repositoryName: data.repositoryName,
       },
     });
