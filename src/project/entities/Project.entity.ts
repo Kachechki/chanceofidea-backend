@@ -47,9 +47,7 @@ export class ProjectEntity {
   category: CategoryEntity;
 
   @JoinTable()
-  @ManyToMany(() => TagEntity, (tags) => tags.projects, {
-    onDelete: "SET NULL",
-  })
+  @ManyToMany(() => TagEntity, (tag) => tag.projects)
   tags: TagEntity[];
 
   @OneToMany(() => ApplicationEntity, (application) => application.project)
