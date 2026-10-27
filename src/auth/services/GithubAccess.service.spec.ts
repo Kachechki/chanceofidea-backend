@@ -62,7 +62,9 @@ describe("GithubAccessService", () => {
     it("should find the user by ID", async () => {
       await service.save({ accessToken, userId });
 
-      expect(userService.findById).toHaveBeenCalledWith(userId);
+      expect(userService.findById).toHaveBeenCalledWith(userId, {
+        githubAccessToken: true,
+      });
       expect(userService.findById).toHaveBeenCalledTimes(1);
     });
 
@@ -130,7 +132,9 @@ describe("GithubAccessService", () => {
 
       await service.get(user);
 
-      expect(repository.findOneBy).toHaveBeenCalledWith({ user });
+      expect(repository.findOneBy).toHaveBeenCalledWith({
+        user: { id: user.id },
+      });
       expect(repository.findOneBy).toHaveBeenCalledTimes(1);
     });
 

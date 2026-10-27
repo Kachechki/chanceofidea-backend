@@ -141,10 +141,10 @@ describe("AuthService", () => {
     it("should save the GitHub access token for the saved user", async () => {
       await service.authenticate("oauth-code");
 
-      expect(githubAccessService.save).toHaveBeenCalledWith(
-        githubAccessToken,
+      expect(githubAccessService.save).toHaveBeenCalledWith({
+        accessToken: githubAccessToken,
         userId,
-      );
+      });
 
       expect(githubAccessService.save).toHaveBeenCalledTimes(1);
     });
