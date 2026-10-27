@@ -111,7 +111,7 @@ describe("ApplicationController", () => {
     it("should accept the specified application", async () => {
       const req = { user: { id: userId } } as any;
 
-      await controller.accept({ applicationId }, req);
+      await controller.accept({ id: applicationId }, req);
 
       expect(applicationService.accept).toHaveBeenCalledWith(
         applicationId,
@@ -126,7 +126,7 @@ describe("ApplicationController", () => {
       const rejectReason = "The application does not meet the requirements";
       const req = { user: { id: userId } } as any;
 
-      await controller.reject({ applicationId }, { rejectReason }, req);
+      await controller.reject({ id: applicationId }, { rejectReason }, req);
 
       expect(applicationService.reject).toHaveBeenCalledWith(
         applicationId,

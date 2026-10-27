@@ -90,7 +90,7 @@ export class ApplicationController {
     @Query() dto: AcceptRejectApplicationDto,
     @Req() req: IRequestWithRefresh,
   ): Promise<void> {
-    await this.applicationService.accept(dto.applicationId, req.user.id);
+    await this.applicationService.accept(dto.id, req.user.id);
   }
 
   @Post("reject")
@@ -111,7 +111,7 @@ export class ApplicationController {
     @Req() req: IRequestWithRefresh,
   ): Promise<void> {
     await this.applicationService.reject(
-      queryDto.applicationId,
+      queryDto.id,
       req.user.id,
       dto.rejectReason,
     );
