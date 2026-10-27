@@ -7,5 +7,5 @@ export class AcceptRejectApplicationDto {
     description: "Which application to be accepted",
   })
   @IsUUID()
-  applicationId: string;
+  id: string;
 }
