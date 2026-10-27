@@ -285,6 +285,9 @@ export class ProjectService implements IProjectSerice {
       },
     );
     const project = transferSession.project;
+    console.log("\n\n");
+    console.log(transferSession);
+    console.log(project);
 
     project.status = ProjectStatusEnum.ADOPTED;
 
