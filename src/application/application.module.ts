@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationEntity } from "./entities/Application.entity";
 import { ApplicationController } from "./application.controller";
@@ -11,10 +11,11 @@ import { ApplicationService } from "./services/Application.service";
   imports: [
     TypeOrmModule.forFeature([ApplicationEntity]),
     AuthModule,
-    ProjectModule,
+    forwardRef(() => ProjectModule),
     UserModule,
   ],
   controllers: [ApplicationController],
   providers: [ApplicationService],
+  exports: [ApplicationService],
 })
 export class ApplicationModule {}

@@ -6,6 +6,7 @@ import { TransferSessionService } from "./TransferSession.service";
 import { TransferSessionStatusEnum } from "../../enums/TransferSessionStatusEnum.status";
 import { UserService } from "../../user/services/User.service";
 import { GithubService } from "../../github/services/Github.service";
+import { ApplicationService } from "../../application/services/Application.service";
 
 type MockRepository = {
   findOne: jest.Mock;
@@ -18,6 +19,7 @@ describe("TransferSessionService", () => {
   let eventEmitter: { emitAsync: jest.Mock };
   let userService: { findById: jest.Mock };
   let githubService: { validateRepositry: jest.Mock };
+  let applicationService: { findById: jest.Mock };
 
   const applicant = {
     id: "user-1",
@@ -39,6 +41,12 @@ describe("TransferSessionService", () => {
     project,
   } as TransferSessionEntity;
 
+  const application = {
+    id: applicationId,
+    applicant,
+    project,
+  };
+
   beforeEach(() => {
     repository = {
       findOne: jest.fn(),
@@ -57,11 +65,16 @@ describe("TransferSessionService", () => {
       validateRepositry: jest.fn(),
     };
 
+    applicationService = {
+      findById: jest.fn(),
+    };
+
     service = new TransferSessionService(
       repository as unknown as Repository<TransferSessionEntity>,
       eventEmitter as unknown as EventEmitter2,
       userService as unknown as UserService,
       githubService as unknown as GithubService,
+      applicationService as unknown as ApplicationService,
     );
   });
 
@@ -228,6 +241,7 @@ describe("TransferSessionService", () => {
   describe("iHaveRecievedTheRepo", () => {
     beforeEach(() => {
       userService.findById.mockResolvedValue(applicant);
+      applicationService.findById.mockResolvedValue(application);
       repository.findOne.mockResolvedValue(transferSession);
       githubService.validateRepositry.mockResolvedValue(true);
     });
@@ -236,20 +250,34 @@ describe("TransferSessionService", () => {
       await service.iHaveRecievedTheRepo("user-1", applicationId);
 
       expect(userService.findById).toHaveBeenCalledWith("user-1");
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { applicant: { applications: { id: applicationId } } },
-        relations: { project: true, applicant: true },
+
+      expect(applicationService.findById).toHaveBeenCalledWith(applicationId, {
+        project: true,
+        applicant: true,
       });
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: {
+          project: { id: project.id },
+          applicant: { id: applicant.id },
+        },
+        relations: {
+          project: true,
+          applicant: true,
+        },
+      });
+
       expect(githubService.validateRepositry).toHaveBeenCalledWith({
         ownerLogin: applicant.login,
         repositoryName: project.repositoryName,
       });
+
       expect(eventEmitter.emitAsync).toHaveBeenCalledWith("transfer.success", {
         transferSessionId: transferSession.id,
       });
     });
 
-    it("should throw NotFoundException if no transfer session exists", async () => {
+    it("should throw NotFoundException if the transfer session does not exist", async () => {
       repository.findOne.mockResolvedValue(null);
 
       await expect(
@@ -289,6 +317,17 @@ describe("TransferSessionService", () => {
       ).rejects.toThrow(error);
     });
 
+    it("should propagate errors from ApplicationService", async () => {
+      const error = new Error("Application lookup failed");
+      applicationService.findById.mockRejectedValue(error);
+
+      await expect(
+        service.iHaveRecievedTheRepo("user-1", applicationId),
+      ).rejects.toThrow(error);
+
+      expect(repository.findOne).not.toHaveBeenCalled();
+    });
+
     it("should propagate errors from GitHub validation", async () => {
       const error = new Error("GitHub API error");
       githubService.validateRepositry.mockRejectedValue(error);
@@ -296,6 +335,24 @@ describe("TransferSessionService", () => {
       await expect(
         service.iHaveRecievedTheRepo("user-1", applicationId),
       ).rejects.toThrow(error);
+    });
+
+    it("should throw NotAcceptableException if the applicant tries to confirm another user's transfer", async () => {
+      const otherApplicant = {
+        id: "user-2",
+        login: "someone-else",
+      };
+
+      userService.findById.mockResolvedValue(otherApplicant);
+
+      await expect(
+        service.iHaveRecievedTheRepo("user-2", applicationId),
+      ).rejects.toThrow(
+        new NotAcceptableException("Not allowed to decide for someone else"),
+      );
+
+      expect(githubService.validateRepositry).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
   });
 
