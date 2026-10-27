@@ -86,8 +86,11 @@ export class ApplicationController {
   @ApiConflictResponse({
     description: "One of the applications is already accepted",
   })
-  async accept(@Query() dto: AcceptRejectApplicationDto): Promise<void> {
-    await this.applicationService.accept(dto.applicationId);
+  async accept(
+    @Query() dto: AcceptRejectApplicationDto,
+    @Req() req: IRequestWithRefresh,
+  ): Promise<void> {
+    await this.applicationService.accept(dto.applicationId, req.user.id);
   }
 
   @Post("reject")
@@ -105,9 +108,11 @@ export class ApplicationController {
   async reject(
     @Query() queryDto: AcceptRejectApplicationDto,
     @Body() dto: RejectApplicationDto,
+    @Req() req: IRequestWithRefresh,
   ): Promise<void> {
     await this.applicationService.reject(
       queryDto.applicationId,
+      req.user.id,
       dto.rejectReason,
     );
   }

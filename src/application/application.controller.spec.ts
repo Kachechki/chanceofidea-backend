@@ -109,9 +109,14 @@ describe("ApplicationController", () => {
 
   describe("accept", () => {
     it("should accept the specified application", async () => {
-      await controller.accept({ applicationId });
+      const req = { user: { id: userId } } as any;
 
-      expect(applicationService.accept).toHaveBeenCalledWith(applicationId);
+      await controller.accept({ applicationId }, req);
+
+      expect(applicationService.accept).toHaveBeenCalledWith(
+        applicationId,
+        userId,
+      );
       expect(applicationService.accept).toHaveBeenCalledTimes(1);
     });
   });
@@ -119,11 +124,13 @@ describe("ApplicationController", () => {
   describe("reject", () => {
     it("should reject the specified application with a reason", async () => {
       const rejectReason = "The application does not meet the requirements";
+      const req = { user: { id: userId } } as any;
 
-      await controller.reject({ applicationId }, { rejectReason });
+      await controller.reject({ applicationId }, { rejectReason }, req);
 
       expect(applicationService.reject).toHaveBeenCalledWith(
         applicationId,
+        userId,
         rejectReason,
       );
 

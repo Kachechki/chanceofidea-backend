@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -25,10 +26,11 @@ interface IApplicationService {
     id: string,
     relations?: FindOptionsRelations<ApplicationEntity>,
   ): Promise<ApplicationEntity>;
-  accept(id: string): Promise<void>;
-  reject(id: string, reason?: string): Promise<void>;
+  accept(id: string, userId: string): Promise<void>;
+  reject(id: string, userId: string, reason?: string): Promise<void>;
   findIncoming(userId: string): Promise<ApplicationEntity[]>;
   findOutcoming(userId: string): Promise<ApplicationEntity[]>;
+  findOwnedPending(id: string, userId: string): Promise<ApplicationEntity>;
 }
 
 @Injectable()
@@ -116,8 +118,8 @@ export class ApplicationService implements IApplicationService {
     return application;
   }
 
-  async reject(id: string, reason?: string): Promise<void> {
-    const application = await this.findById(id);
+  async reject(id: string, userId: string, reason?: string): Promise<void> {
+    const application = await this.findOwnedPending(id, userId);
 
     application.status = ApplicationStatusEnum.REJECTED;
     if (reason) application.rejectReason = reason;
@@ -125,7 +127,8 @@ export class ApplicationService implements IApplicationService {
     await this.repository.save(application);
   }
 
-  async accept(id: string): Promise<void> {
+  async accept(id: string, userId: string): Promise<void> {
+    await this.findOwnedPending(id, userId);
     const transferSessionId = await this.dataSource.transaction(
       async (manager) => {
         const applicationRepository = manager.getRepository(ApplicationEntity);
@@ -213,5 +216,22 @@ export class ApplicationService implements IApplicationService {
     });
 
     return user.applications;
+  }
+  // loads the application and checks that userId owns its project
+  async findOwnedPending(
+    id: string,
+    userId: string,
+  ): Promise<ApplicationEntity> {
+    const application = await this.findById(id, {
+      project: { owner: true },
+    });
+
+    if (application.project.owner.id !== userId)
+      throw new ForbiddenException("Only the project owner can decide");
+
+    if (application.status !== ApplicationStatusEnum.PENDING)
+      throw new ConflictException("Application is already decided");
+
+    return application;
   }
 }

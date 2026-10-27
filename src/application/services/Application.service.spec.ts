@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
@@ -69,11 +70,13 @@ describe("ApplicationService", () => {
 
   const projectId = "project-1";
   const userId = "user-1";
+  const ownerId = "owner-1";
   const applicationId = "application-1";
 
   const project = {
     id: projectId,
     status: ProjectStatusEnum.PUBLISHED,
+    owner: { id: ownerId },
   };
 
   const applicant = {
@@ -306,9 +309,10 @@ describe("ApplicationService", () => {
     it("marks an application as rejected", async () => {
       applicationRepository.findOne.mockResolvedValue({
         ...application,
+        project: { ...project },
       });
 
-      await service.reject(applicationId);
+      await service.reject(applicationId, ownerId);
 
       expect(applicationRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -321,9 +325,10 @@ describe("ApplicationService", () => {
     it("stores the rejection reason", async () => {
       applicationRepository.findOne.mockResolvedValue({
         ...application,
+        project: { ...project },
       });
 
-      await service.reject(applicationId, "Not a good fit");
+      await service.reject(applicationId, ownerId, "Not a good fit");
 
       expect(applicationRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -336,10 +341,11 @@ describe("ApplicationService", () => {
     it("preserves the existing reason when no new reason is provided", async () => {
       applicationRepository.findOne.mockResolvedValue({
         ...application,
+        project: { ...project },
         rejectReason: "Previous reason",
       });
 
-      await service.reject(applicationId);
+      await service.reject(applicationId, ownerId);
 
       expect(applicationRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -351,7 +357,7 @@ describe("ApplicationService", () => {
     it("does not save when the application does not exist", async () => {
       applicationRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.reject(applicationId)).rejects.toThrow(
+      await expect(service.reject(applicationId, ownerId)).rejects.toThrow(
         NotFoundException,
       );
 
@@ -361,6 +367,10 @@ describe("ApplicationService", () => {
 
   describe("accept", () => {
     beforeEach(() => {
+      applicationRepository.findOne.mockResolvedValue({
+        ...application,
+        project: { ...project },
+      });
       transactionApplicationRepository.findOne.mockResolvedValue({
         ...application,
         project: { ...project },
@@ -369,7 +379,7 @@ describe("ApplicationService", () => {
     });
 
     it("accepts the application and starts a transfer session", async () => {
-      await service.accept(applicationId);
+      await service.accept(applicationId, ownerId);
 
       expect(projectRepository.findOne).toHaveBeenCalledWith({
         where: { id: projectId },
@@ -412,7 +422,7 @@ describe("ApplicationService", () => {
     it("throws NotFoundException when the application does not exist", async () => {
       transactionApplicationRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.accept(applicationId)).rejects.toThrow(
+      await expect(service.accept(applicationId, ownerId)).rejects.toThrow(
         new NotFoundException("Application not found"),
       );
 
@@ -423,7 +433,7 @@ describe("ApplicationService", () => {
     it("throws NotFoundException when the project does not exist", async () => {
       projectRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.accept(applicationId)).rejects.toThrow(
+      await expect(service.accept(applicationId, ownerId)).rejects.toThrow(
         new NotFoundException("Project not found"),
       );
 
@@ -435,7 +445,7 @@ describe("ApplicationService", () => {
     it("throws ConflictException if an application for the same project is already accepted", async () => {
       transactionApplicationRepository.exists.mockResolvedValue(true);
 
-      await expect(service.accept(applicationId)).rejects.toThrow(
+      await expect(service.accept(applicationId, ownerId)).rejects.toThrow(
         new ConflictException(
           "One of the applications for this project is already accepted",
         ),
@@ -459,7 +469,7 @@ describe("ApplicationService", () => {
         status: ProjectStatusEnum.TRANSFERRING,
       });
 
-      await expect(service.accept(applicationId)).rejects.toThrow(
+      await expect(service.accept(applicationId, ownerId)).rejects.toThrow(
         new BadRequestException("Project is already being transferred"),
       );
 
