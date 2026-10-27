@@ -150,6 +150,7 @@ describe("ProjectService", () => {
         .mockResolvedValueOnce(tag1)
         .mockResolvedValueOnce(tag2);
       userService.findById.mockResolvedValue(owner);
+      repository.find.mockResolvedValue([]);
       fetchMock.mockResolvedValue(
         makeResponse(true, 200, { name: "actual-repo-name" }),
       );
@@ -165,6 +166,12 @@ describe("ProjectService", () => {
       expect(fetchMock.mock.calls[0][0]).toBe(
         "https://api.github.com/repos/github-owner/submitted-repo-name",
       );
+      expect(repository.find).toHaveBeenCalledWith({
+        where: {
+          owner: { id: owner.id },
+          repositoryName: data.repositoryName,
+        },
+      });
     });
 
     it("should save the project with resolved relations and published status", async () => {
@@ -193,6 +200,30 @@ describe("ProjectService", () => {
           status: ProjectStatusEnum.DRAFT,
         }),
       );
+    });
+
+    it("should reject creation when the owner already has an active project for the repository", async () => {
+      repository.find.mockResolvedValue([
+        { status: ProjectStatusEnum.PUBLISHED },
+      ]);
+
+      await expect(service.create(data)).rejects.toThrow(
+        new BadRequestException(
+          "Not allowed to create another active project under this repository",
+        ),
+      );
+
+      expect(repository.save).not.toHaveBeenCalled();
+    });
+
+    it("should allow creation when the existing project is adopted", async () => {
+      repository.find.mockResolvedValue([
+        { status: ProjectStatusEnum.ADOPTED },
+      ]);
+
+      await expect(service.create(data)).resolves.toBeUndefined();
+
+      expect(repository.save).toHaveBeenCalledTimes(1);
     });
 
     it("should reject creation when no tags are provided", async () => {

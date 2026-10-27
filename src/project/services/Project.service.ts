@@ -90,6 +90,20 @@ export class ProjectService implements IProjectSerice {
       throw error;
     }
 
+    const existingProjects = await this.repository.find({
+      where: {
+        owner: { id: owner.id },
+        repositoryName: data.repositoryName,
+      },
+    });
+
+    existingProjects.map((project) => {
+      if (project.status !== ProjectStatusEnum.ADOPTED)
+        throw new BadRequestException(
+          "Not allowed to create another active project under this repository",
+        );
+    });
+
     await this.repository.save({
       ...data,
       categoryName: undefined,
