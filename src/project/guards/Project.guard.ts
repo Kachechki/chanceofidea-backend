@@ -23,7 +23,7 @@ export class ProjectGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     if (!req.user) throw new InternalServerErrorException();
 
-    const projectId = req.body?.id ?? req.query.id;
+    const projectId = req.body?.projectId ?? req.query.projectId;
 
     if (!projectId) throw new BadRequestException("No project ID provided");
 
