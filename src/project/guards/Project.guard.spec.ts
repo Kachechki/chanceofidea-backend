@@ -60,7 +60,7 @@ describe("ProjectGuard", () => {
 
     it("should throw InternalServerErrorException when the request has no user", async () => {
       const context = createContext({
-        body: { id: projectId },
+        body: { projectId },
         query: {},
       });
 
@@ -96,8 +96,8 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
-        query: { id: "another-project" },
+        body: { projectId },
+        query: { projectId: "another-project" },
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
@@ -122,7 +122,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        query: { id: projectId },
+        query: { projectId },
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
@@ -138,7 +138,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
+        body: { projectId },
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
@@ -157,7 +157,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
+        body: { projectId },
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
@@ -181,7 +181,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
+        body: { projectId },
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
@@ -202,7 +202,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
+        body: { projectId },
       });
 
       await expect(guard.canActivate(context)).resolves.toBe(false);
@@ -218,7 +218,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
+        body: { projectId },
       });
 
       await expect(guard.canActivate(context)).rejects.toThrow(error);
@@ -230,7 +230,7 @@ describe("ProjectGuard", () => {
 
       const context = createContext({
         user: { id: userId },
-        body: { id: projectId },
+        body: { projectId },
       });
 
       await expect(guard.canActivate(context)).rejects.toThrow(error);

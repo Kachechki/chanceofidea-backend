@@ -69,7 +69,7 @@ export class ApplicationController {
   }
 
   @Post("accept")
-  @UseGuards(AuthGuard, ProjectGuard)
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: "Accept a project application" })
   @ApiOkResponse({
     description: "Application accepted successfully",
@@ -94,7 +94,7 @@ export class ApplicationController {
   }
 
   @Post("reject")
-  @UseGuards(AuthGuard, ProjectGuard)
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: "Reject a project application" })
   @ApiOkResponse({
     description: "Application rejected successfully",
