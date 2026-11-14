@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nextjs-docker-backend
+    name: nestjs-docker-backend
     env: docker
     plan: free 
     
@@ -39,3 +39,14 @@ services:
       - key: FRONTEND_URL
         sync: false
 
+      - key: REDIS_HOST
+        sync: false
+
+      -key: REDIS_PORT
+        sync: false
+
+  - type: redis
+    name: redis-process
+    plan: free
+    maxmemoryPolicy; allkeys-lru
+    ipAllowList: [] # Local services only. Change if using external redis service

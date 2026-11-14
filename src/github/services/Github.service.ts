@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, NotAcceptableException } from "@nestjs/common";
 import { Octokit } from "octokit";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 
@@ -59,6 +59,7 @@ export class GithubService implements IGithubService {
     );
 
     const owner = transferSession.project.owner;
+
     const applicant = transferSession.applicant;
 
     const accessToken = await this.githubAccessService.get(owner);
@@ -67,9 +68,9 @@ export class GithubService implements IGithubService {
 
     try {
       await octokit.rest.repos.transfer({
-        owner: owner.login,
+        owner: owner.login!,
         repo: transferSession.project.repositoryName,
-        new_owner: applicant.login,
+        new_owner: applicant.login!,
       });
 
       transferSession.project.status = ProjectStatusEnum.TRANSFERRING;
@@ -165,7 +166,7 @@ This document was generated automatically upon confirmation of the successful re
 
       try {
         const { data } = await octokit.rest.repos.getContent({
-          owner: newOwner.login,
+          owner: newOwner.login!,
           repo: project.repositoryName,
           path: "TRANSFER.md",
         });
@@ -187,7 +188,7 @@ This document was generated automatically upon confirmation of the successful re
       }
 
       await octokit.rest.repos.createOrUpdateFileContents({
-        owner: newOwner.login,
+        owner: newOwner.login!,
         repo: project.repositoryName,
         path: "TRANSFER.md",
         message: sha

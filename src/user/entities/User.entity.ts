@@ -17,14 +17,17 @@ export class UserEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ unique: true, update: false })
-  githubId: number;
+  @Column({ unique: true, update: false, nullable: true })
+  githubId?: number;
 
-  @Column({ unique: true, update: false })
-  login: string;
+  @Column({ unique: true, update: false, nullable: true })
+  login?: string;
 
-  @Column()
-  avatarUrl: string;
+  @Column({ unique: true, nullable: true })
+  email?: string;
+
+  @Column({ nullable: true })
+  avatarUrl?: string;
 
   @Column({ default: "" })
   bio: string;

@@ -119,7 +119,7 @@ export class TransferSessionService implements ITransferSessionService {
 
     if (
       !(await this.githubService.validateRepositry({
-        ownerLogin: applicant.login,
+        ownerLogin: applicant.login!,
         repositoryName: transferSession.project.repositoryName,
       }))
     ) {
@@ -154,7 +154,7 @@ export class TransferSessionService implements ITransferSessionService {
 
     if (
       await this.githubService.validateRepositry({
-        ownerLogin: applicant.login,
+        ownerLogin: applicant.login!,
         repositoryName: transferSession.project.repositoryName,
       })
     ) {

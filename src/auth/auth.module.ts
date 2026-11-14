@@ -9,12 +9,16 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { GithubAccessEntity } from "./entities/GithubAccess.entity";
 import { GithubAccessService } from "./services/GithubAccess.service";
 import { EncryptionService } from "./services/Encryption.service";
+import { MailModule } from "../mail/mail.module";
+import { RedisModule } from "../redis/redis.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([GithubAccessEntity]),
     forwardRef(() => UserModule),
     JwtModule,
+    MailModule,
+    RedisModule,
   ],
   controllers: [AuthController],
   providers: [

@@ -24,7 +24,13 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
 import { TransferSessionModule } from "./transfer-session/transfer-session.module";
 import { TransferSessionEntity } from "./transfer-session/entities/TransferSession.entity";
 import { CacheModule } from "@nestjs/cache-manager";
+import { MailModule } from "./mail/mail.module";
 import "dotenv/config";
+import { BullModule } from "@nestjs/bullmq";
+import { RedisModule } from "./redis/redis.module";
+import SMTPConfig from "./config/SMTP.config";
+import RedisConfig from "./config/Redis.config";
+import MailConfig from "./config/Mail.config";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -55,7 +61,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [GithubConfig, JwtConfig],
+      load: [GithubConfig, JwtConfig, SMTPConfig, RedisConfig, MailConfig],
     }),
     ProjectModule,
     CategoryModule,
@@ -75,6 +81,14 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     EventEmitterModule.forRoot(),
     TransferSessionModule,
     CacheModule.register({ isGlobal: true }),
+    MailModule,
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST ?? "redis",
+        port: Number(process.env.REDIS_PORT) ?? 6379,
+      },
+    }),
+    RedisModule,
   ],
 })
 export class AppModule {}

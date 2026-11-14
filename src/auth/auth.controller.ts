@@ -1,13 +1,17 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  Post,
   Query,
   Req,
   Res,
 } from "@nestjs/common";
 import { AuthService } from "./services/Auth.service";
 import type { Response, Request } from "express";
+import { StartEmailAuthDto } from "../dto/StartEmailAuth.dto";
+import { FinishEmailAuthDto } from "../dto/FinishEmailAuth.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -48,6 +52,32 @@ export class AuthController {
       sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 3600 * 1000,
+    });
+  }
+
+  @Post("email/start")
+  async startEmailAuth(@Body() dto: StartEmailAuthDto) {
+    await this.authService.startEmailAuth(dto.email);
+  }
+
+  @Post("email/finish")
+  async finishEmailAuth(
+    @Body() dto: FinishEmailAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const jwt = await this.authService.finishEmailAuth({
+      code: String(dto.code),
+      email: dto.email,
+    });
+
+    res.set({ "x-access-token": jwt.access });
+
+    res.cookie("refresh", jwt.refresh, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 26 * 3600 * 1000,
     });
   }
 }

@@ -16,17 +16,21 @@ export class UserDto {
   @ApiProperty({
     description: "The user's GitHub login (username)",
     example: "octocat",
+    nullable: true,
   })
+  @IsOptional()
   @IsString()
-  login: string;
+  login?: string;
 
   @ApiProperty({
     description: "URL of the user's GitHub avatar",
     example: "https://avatars.githubusercontent.com/u/583231?v=4",
     format: "uri",
+    nullable: true,
   })
   @IsUrl()
-  avatarUrl: string;
+  @IsOptional()
+  avatarUrl?: string;
 
   @ApiProperty({
     description: "The user's GitHub profile bio",
@@ -35,7 +39,7 @@ export class UserDto {
   })
   @IsOptional()
   @IsString()
-  bio: string;
+  bio?: string;
 
   @ApiProperty({
     description: "Date and time when the user was created",

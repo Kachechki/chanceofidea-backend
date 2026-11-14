@@ -70,7 +70,7 @@ export class ProjectService implements IProjectSerice {
 
     try {
       const response = await octokit.rest.repos.get({
-        owner: owner.login,
+        owner: owner.login!,
         repo: data.repositoryName,
       });
 

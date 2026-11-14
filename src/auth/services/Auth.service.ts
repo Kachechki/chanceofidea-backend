@@ -1,19 +1,24 @@
 import { ConfigService } from "@nestjs/config";
 import { UserService } from "../../user/services/User.service";
 import {
+  BadRequestException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { Octokit } from "octokit";
 import { JwtTokenService } from "./Jwt.service";
 import { IJwtPair } from "../../types/JwtPair.interface";
 import { GithubAccessService } from "./GithubAccess.service";
-import { error } from "console";
+import { MailService } from "../../mail/services/Mail.service";
+import { createHmac, randomInt, timingSafeEqual } from "crypto";
+import { RedisService } from "../../redis/services/Redis.service";
+import { IFinishEmailAuthData } from "../../types/FinishEmailAuthData.interface";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
   refresh(refresh: string): Promise<IJwtPair>;
+  startEmailAuth(email: string): Promise<void>;
+  finishEmailAuth(data: IFinishEmailAuthData): Promise<IJwtPair>;
 }
 
 @Injectable()
@@ -23,6 +28,8 @@ export class AuthService implements IAuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtTokenService,
     private readonly githubAccessService: GithubAccessService,
+    private readonly mailService: MailService,
+    private readonly redisService: RedisService,
   ) {}
 
   async authenticate(code: string): Promise<IJwtPair> {
@@ -76,5 +83,53 @@ export class AuthService implements IAuthService {
 
   async refresh(refresh: string): Promise<IJwtPair> {
     return await this.jwtService.refresh(refresh);
+  }
+
+  async startEmailAuth(email: string): Promise<void> {
+    const code = randomInt(100_000, 1_000_000).toString();
+
+    const hmac = createHmac(
+      "sha256",
+      this.configService.getOrThrow<string>("mail.verificationSecret"),
+    )
+      .update(code)
+      .digest("hex");
+
+    await this.redisService.set(`email-verification:${email}`, hmac, 300);
+
+    await await this.mailService.sendVerificationEmail({
+      code,
+      to: email,
+    });
+  }
+
+  async finishEmailAuth(data: IFinishEmailAuthData): Promise<IJwtPair> {
+    const storedHmac = await this.redisService.get(
+      `email-verification:${data.email}`,
+    );
+
+    if (!storedHmac) throw new BadRequestException("The code has expired");
+
+    const submittedHmac = createHmac(
+      "sha256",
+      this.configService.getOrThrow<string>("mail.verificationSecret"),
+    )
+      .update(data.code)
+      .digest("hex");
+
+    const isValid = timingSafeEqual(
+      Buffer.from(storedHmac, "hex"),
+      Buffer.from(submittedHmac, "hex"),
+    );
+
+    if (!isValid) throw new UnauthorizedException("The code is incorrect");
+
+    const userId = await this.userService.save({
+      email: data.email,
+    });
+
+    await this.redisService.del(`email-verification:${data.email}`);
+
+    return this.jwtService.sign({ id: userId });
   }
 }

@@ -3,6 +3,10 @@ import { UserService } from "../../user/services/User.service";
 import { JwtTokenService } from "./Jwt.service";
 import { GithubAccessService } from "./GithubAccess.service";
 import { AuthService } from "./Auth.service";
+import { MailService } from "../../mail/services/Mail.service";
+import { RedisService } from "../../redis/services/Redis.service";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { createHmac } from "crypto";
 
 describe("AuthService", () => {
   let service: AuthService;
@@ -17,10 +21,21 @@ describe("AuthService", () => {
 
   let jwtService: {
     sign: jest.Mock;
+    refresh: jest.Mock;
   };
 
   let githubAccessService: {
     save: jest.Mock;
+  };
+
+  let mailService: {
+    sendVerificationEmail: jest.Mock;
+  };
+
+  let redisService: {
+    set: jest.Mock;
+    get: jest.Mock;
+    del: jest.Mock;
   };
 
   const userId = "user-123";
@@ -45,6 +60,7 @@ describe("AuthService", () => {
         const values: Record<string, string> = {
           "github.clientId": "github-client-id",
           "github.clientSecret": "github-client-secret",
+          "mail.verificationSecret": "test-verification-secret",
         };
 
         if (!(key in values)) {
@@ -61,10 +77,21 @@ describe("AuthService", () => {
 
     jwtService = {
       sign: jest.fn().mockResolvedValue(jwtPair),
+      refresh: jest.fn().mockResolvedValue(jwtPair),
     };
 
     githubAccessService = {
       save: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mailService = {
+      sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+    };
+
+    redisService = {
+      set: jest.fn().mockResolvedValue(undefined),
+      get: jest.fn(),
+      del: jest.fn().mockResolvedValue(undefined),
     };
 
     service = new AuthService(
@@ -72,6 +99,8 @@ describe("AuthService", () => {
       userService as unknown as UserService,
       jwtService as unknown as JwtTokenService,
       githubAccessService as unknown as GithubAccessService,
+      mailService as unknown as MailService,
+      redisService as unknown as RedisService,
     );
 
     global.fetch = jest
@@ -215,6 +244,249 @@ describe("AuthService", () => {
       jwtService.sign.mockRejectedValue(new Error("JWT signing failed"));
 
       await expect(service.authenticate("oauth-code")).rejects.toThrow(
+        "JWT signing failed",
+      );
+    });
+  });
+
+  describe("refresh", () => {
+    const refreshToken = "refresh-token";
+
+    it("should delegate token refresh to JwtTokenService", async () => {
+      await service.refresh(refreshToken);
+
+      expect(jwtService.refresh).toHaveBeenCalledTimes(1);
+      expect(jwtService.refresh).toHaveBeenCalledWith(refreshToken);
+    });
+
+    it("should return the JWT pair", async () => {
+      await expect(service.refresh(refreshToken)).resolves.toEqual(jwtPair);
+    });
+
+    it("should propagate errors from JwtTokenService", async () => {
+      const error = new UnauthorizedException("Invalid refresh token");
+      jwtService.refresh.mockRejectedValue(error);
+
+      await expect(service.refresh(refreshToken)).rejects.toThrow(error);
+    });
+  });
+
+  describe("startEmailAuth", () => {
+    const email = "test@example.com";
+    const verificationSecret = "test-verification-secret";
+
+    it("should generate a six-digit verification code", async () => {
+      await service.startEmailAuth(email);
+
+      // The method receives one object, not two arguments.
+      const sentEmail = mailService.sendVerificationEmail.mock.calls[0][0];
+
+      expect(sentEmail.code).toMatch(/^\d{6}$/);
+    });
+
+    it("should store the HMAC of the verification code in Redis", async () => {
+      await service.startEmailAuth(email);
+
+      const sentEmail = mailService.sendVerificationEmail.mock.calls[0][0];
+
+      const expectedHmac = createHmac("sha256", verificationSecret)
+        .update(sentEmail.code)
+        .digest("hex");
+
+      expect(redisService.set).toHaveBeenCalledTimes(1);
+      expect(redisService.set).toHaveBeenCalledWith(
+        `email-verification:${email}`,
+        expectedHmac,
+        300,
+      );
+    });
+
+    it("should send the verification code to the provided email", async () => {
+      await service.startEmailAuth(email);
+
+      const sentEmail = mailService.sendVerificationEmail.mock.calls[0][0];
+
+      expect(mailService.sendVerificationEmail).toHaveBeenCalledTimes(1);
+      expect(sentEmail.to).toBe(email);
+      expect(sentEmail.code).toMatch(/^\d{6}$/);
+    });
+
+    it("should store the code before sending the email", async () => {
+      const callOrder: string[] = [];
+
+      redisService.set.mockImplementation(async () => {
+        callOrder.push("redis");
+      });
+
+      mailService.sendVerificationEmail.mockImplementation(async () => {
+        callOrder.push("mail");
+      });
+
+      await service.startEmailAuth(email);
+
+      expect(callOrder).toEqual(["redis", "mail"]);
+    });
+
+    it("should propagate Redis errors", async () => {
+      redisService.set.mockRejectedValue(new Error("Redis unavailable"));
+
+      await expect(service.startEmailAuth(email)).rejects.toThrow(
+        "Redis unavailable",
+      );
+
+      expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
+    });
+
+    it("should propagate email delivery errors", async () => {
+      mailService.sendVerificationEmail.mockRejectedValue(
+        new Error("SMTP unavailable"),
+      );
+
+      await expect(service.startEmailAuth(email)).rejects.toThrow(
+        "SMTP unavailable",
+      );
+    });
+  });
+
+  describe("finishEmailAuth", () => {
+    const email = "test@example.com";
+    const code = "123456";
+    const verificationSecret = "test-verification-secret";
+
+    const storedHmac = createHmac("sha256", verificationSecret)
+      .update(code)
+      .digest("hex");
+
+    const authData = {
+      email,
+      code,
+    };
+
+    beforeEach(() => {
+      redisService.get.mockResolvedValue(storedHmac);
+    });
+
+    it("should retrieve the stored verification HMAC from Redis", async () => {
+      await service.finishEmailAuth(authData);
+
+      expect(redisService.get).toHaveBeenCalledTimes(1);
+      expect(redisService.get).toHaveBeenCalledWith(
+        `email-verification:${email}`,
+      );
+    });
+
+    it("should throw BadRequestException if the code has expired", async () => {
+      redisService.get.mockResolvedValue(null);
+
+      await expect(service.finishEmailAuth(authData)).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(userService.save).not.toHaveBeenCalled();
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it("should throw UnauthorizedException if the code is incorrect", async () => {
+      const incorrectCode = "654321";
+
+      await expect(
+        service.finishEmailAuth({
+          email,
+          code: incorrectCode,
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(userService.save).not.toHaveBeenCalled();
+      expect(redisService.del).not.toHaveBeenCalled();
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it("should create a user using the verified email", async () => {
+      await service.finishEmailAuth(authData);
+
+      expect(userService.save).toHaveBeenCalledTimes(1);
+      expect(userService.save).toHaveBeenCalledWith({ email });
+    });
+
+    it("should delete the verification code after successful verification", async () => {
+      await service.finishEmailAuth(authData);
+
+      expect(redisService.del).toHaveBeenCalledTimes(1);
+      expect(redisService.del).toHaveBeenCalledWith(
+        `email-verification:${email}`,
+      );
+    });
+
+    it("should sign JWTs using the created user's ID", async () => {
+      await service.finishEmailAuth(authData);
+
+      expect(jwtService.sign).toHaveBeenCalledTimes(1);
+      expect(jwtService.sign).toHaveBeenCalledWith({
+        id: userId,
+      });
+    });
+
+    it("should return the JWT pair", async () => {
+      await expect(service.finishEmailAuth(authData)).resolves.toEqual(jwtPair);
+    });
+
+    it("should perform operations in the correct order", async () => {
+      const callOrder: string[] = [];
+
+      redisService.get.mockImplementation(async () => {
+        callOrder.push("redis-get");
+        return storedHmac;
+      });
+
+      userService.save.mockImplementation(async () => {
+        callOrder.push("user-save");
+        return userId;
+      });
+
+      redisService.del.mockImplementation(async () => {
+        callOrder.push("redis-delete");
+      });
+
+      jwtService.sign.mockImplementation(async () => {
+        callOrder.push("jwt-sign");
+        return jwtPair;
+      });
+
+      await service.finishEmailAuth(authData);
+
+      expect(callOrder).toEqual([
+        "redis-get",
+        "user-save",
+        "redis-delete",
+        "jwt-sign",
+      ]);
+    });
+
+    it("should propagate errors if user creation fails", async () => {
+      userService.save.mockRejectedValue(new Error("Database error"));
+
+      await expect(service.finishEmailAuth(authData)).rejects.toThrow(
+        "Database error",
+      );
+
+      expect(redisService.del).not.toHaveBeenCalled();
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it("should propagate errors if Redis deletion fails", async () => {
+      redisService.del.mockRejectedValue(new Error("Redis deletion failed"));
+
+      await expect(service.finishEmailAuth(authData)).rejects.toThrow(
+        "Redis deletion failed",
+      );
+
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it("should propagate errors if JWT signing fails", async () => {
+      jwtService.sign.mockRejectedValue(new Error("JWT signing failed"));
+
+      await expect(service.finishEmailAuth(authData)).rejects.toThrow(
         "JWT signing failed",
       );
     });
