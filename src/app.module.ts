@@ -28,9 +28,12 @@ import { MailModule } from "./mail/mail.module";
 import "dotenv/config";
 import { BullModule } from "@nestjs/bullmq";
 import { RedisModule } from "./redis/redis.module";
+import { SettingsController } from "./settings/settings.controller";
+import { SettingsModule } from "./settings/settings.module";
 import SMTPConfig from "./config/SMTP.config";
 import RedisConfig from "./config/Redis.config";
 import MailConfig from "./config/Mail.config";
+import { SettingsEntity } from "./settings/entities/Settings.entity";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -51,6 +54,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
         GithubAccessEntity,
         ApplicationEntity,
         TransferSessionEntity,
+        SettingsEntity,
       ],
       synchronize: false,
       migrations: [__dirname + "/migrations/*{.js,.ts}"],
@@ -89,6 +93,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       },
     }),
     RedisModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

@@ -37,15 +37,18 @@ export class UserController {
   async me(@Req() req: IRequestWithRefresh): Promise<UserDto> {
     const user = await this.userService.findById(req.user.id, {
       projects: true,
+      settings: true,
     });
 
     return {
       id: user.id,
       bio: user.bio,
-      login: user.login,
+      login: user.login ?? undefined,
       createdAt: user.createdAt,
       avatarUrl: user.avatarUrl,
       projects: user.projects,
+      email: user.email ?? undefined,
+      settings: user.settings ?? undefined
     };
   }
 }

@@ -43,6 +43,7 @@ export class UserService implements IUserService {
         createdAt: existingUser ? new Date() : undefined,
         updatedAt: new Date(),
         email: data.email ?? undefined,
+        settingsId: data.settingsId ?? undefined
       })
     ).id;
   }

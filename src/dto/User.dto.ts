@@ -1,8 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsDate, IsOptional, IsString, IsUrl, IsUUID } from "class-validator";
+import {
+  IsDate,
+  IsEmail,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+} from "class-validator";
 
 import { ProjectDto } from "./ProjectDto";
 import { ApplicationDto } from "./Application.dto";
+import { SettingsDto } from "./Settings.dto";
 
 export class UserDto {
   @ApiProperty({
@@ -65,4 +73,19 @@ export class UserDto {
   })
   @IsOptional()
   applications?: ApplicationDto[];
+
+  @ApiPropertyOptional({
+    description: "User's email",
+    example: "example@mail.com",
+  })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: "User's personal settings",
+    type: () => SettingsDto,
+  })
+  @IsOptional()
+  settings?: SettingsDto;
 }

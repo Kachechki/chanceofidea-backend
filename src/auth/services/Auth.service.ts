@@ -13,6 +13,7 @@ import { MailService } from "../../mail/services/Mail.service";
 import { createHmac, randomInt, timingSafeEqual } from "crypto";
 import { RedisService } from "../../redis/services/Redis.service";
 import { IFinishEmailAuthData } from "../../types/FinishEmailAuthData.interface";
+import { SettingsService } from "../../settings/services/Settings.service";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
@@ -30,6 +31,7 @@ export class AuthService implements IAuthService {
     private readonly githubAccessService: GithubAccessService,
     private readonly mailService: MailService,
     private readonly redisService: RedisService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async authenticate(code: string): Promise<IJwtPair> {
@@ -67,11 +69,14 @@ export class AuthService implements IAuthService {
 
     const { data: profile } = await octokit.rest.users.getAuthenticated();
 
+    const settingsId = await this.settingsService.createDefault();
+
     const userId = await this.userService.save({
       avatarUrl: profile.avatar_url,
       login: profile.login,
       githubId: profile.id,
       githubVerified: true,
+      settingsId,
     });
 
     await this.githubAccessService.save({
@@ -124,10 +129,13 @@ export class AuthService implements IAuthService {
     );
 
     if (!isValid) throw new UnauthorizedException("The code is incorrect");
+    
+    const settingsId = await this.settingsService.createDefault();
 
     const userId = await this.userService.save({
       email: data.email,
       githubVerified: false,
+      settingsId
     });
 
     await this.redisService.del(`email-verification:${data.email}`);

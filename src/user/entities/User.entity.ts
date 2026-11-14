@@ -11,6 +11,7 @@ import {
 import { ProjectEntity } from "../../project/entities/Project.entity";
 import { GithubAccessEntity } from "../../auth/entities/GithubAccess.entity";
 import { ApplicationEntity } from "../../application/entities/Application.entity";
+import { SettingsEntity } from "../../settings/entities/Settings.entity";
 
 @Entity()
 export class UserEntity {
@@ -41,7 +42,6 @@ export class UserEntity {
   @Column({ type: "boolean" })
   githubVerified: boolean;
 
-  @JoinColumn()
   @OneToMany(() => ProjectEntity, (project) => project.owner, {
     onDelete: "SET NULL",
   })
@@ -56,4 +56,8 @@ export class UserEntity {
 
   @OneToMany(() => ApplicationEntity, (applications) => applications.applicant)
   applications: ApplicationEntity[];
+
+  @JoinColumn()
+  @OneToOne(() => SettingsEntity, (settings) => settings.user)
+  settings: SettingsEntity;
 }

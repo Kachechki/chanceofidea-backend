@@ -78,7 +78,9 @@ export class ProjectController {
     const project = await this.projectService.findById(dto.id, {
       applications: true,
       category: true,
-      owner: true,
+      owner: {
+        settings: true,
+      },
       tags: true,
     });
 
@@ -94,6 +96,11 @@ export class ProjectController {
         bio: project.owner.bio,
         createdAt: project.owner.createdAt,
         login: project.owner.login,
+        settings: {
+          id: project.owner.settings.id,
+          prefferedLocale: project.owner.settings.prefferedLocale,
+          theme: project.owner.settings.theme,
+        },
       },
       repositoryName: project.repositoryName,
       status: project.status,

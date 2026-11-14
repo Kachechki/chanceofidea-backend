@@ -6,4 +6,5 @@ export interface ISaveUser {
   bio?: string;
   email?: string;
   githubVerified?: boolean;
+  settingsId?: string;
 }

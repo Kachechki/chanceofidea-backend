@@ -11,6 +11,7 @@ import { GithubAccessService } from "./services/GithubAccess.service";
 import { EncryptionService } from "./services/Encryption.service";
 import { MailModule } from "../mail/mail.module";
 import { RedisModule } from "../redis/redis.module";
+import { SettingsModule } from "../settings/settings.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RedisModule } from "../redis/redis.module";
     JwtModule,
     MailModule,
     RedisModule,
+    forwardRef(() => SettingsModule),
   ],
   controllers: [AuthController],
   providers: [

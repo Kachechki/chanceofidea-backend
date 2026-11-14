@@ -7,6 +7,7 @@ import { MailService } from "../../mail/services/Mail.service";
 import { RedisService } from "../../redis/services/Redis.service";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { createHmac } from "crypto";
+import { SettingsService } from "../../settings/services/Settings.service";
 
 describe("AuthService", () => {
   let service: AuthService;
@@ -36,6 +37,10 @@ describe("AuthService", () => {
     set: jest.Mock;
     get: jest.Mock;
     del: jest.Mock;
+  };
+
+  let settingsService: {
+    createDefault: jest.Mock;
   };
 
   const userId = "user-123";
@@ -94,6 +99,10 @@ describe("AuthService", () => {
       del: jest.fn().mockResolvedValue(undefined),
     };
 
+    settingsService = {
+      createDefault: jest.fn().mockRejectedValue(undefined),
+    };
+
     service = new AuthService(
       configService as unknown as ConfigService,
       userService as unknown as UserService,
@@ -101,6 +110,7 @@ describe("AuthService", () => {
       githubAccessService as unknown as GithubAccessService,
       mailService as unknown as MailService,
       redisService as unknown as RedisService,
+      SettingsService as unknown as SettingsService,
     );
 
     global.fetch = jest
