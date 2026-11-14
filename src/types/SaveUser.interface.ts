@@ -5,4 +5,5 @@ export interface ISaveUser {
   avatarUrl?: string;
   bio?: string;
   email?: string;
+  githubVerified?: boolean;
 }

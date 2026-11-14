@@ -71,6 +71,7 @@ export class AuthService implements IAuthService {
       avatarUrl: profile.avatar_url,
       login: profile.login,
       githubId: profile.id,
+      githubVerified: true,
     });
 
     await this.githubAccessService.save({
@@ -78,7 +79,7 @@ export class AuthService implements IAuthService {
       userId,
     });
 
-    return this.jwtService.sign({ id: userId });
+    return this.jwtService.sign({ id: userId, githubVerified: true });
   }
 
   async refresh(refresh: string): Promise<IJwtPair> {
@@ -126,10 +127,11 @@ export class AuthService implements IAuthService {
 
     const userId = await this.userService.save({
       email: data.email,
+      githubVerified: false,
     });
 
     await this.redisService.del(`email-verification:${data.email}`);
 
-    return this.jwtService.sign({ id: userId });
+    return this.jwtService.sign({ id: userId, githubVerified: false });
   }
 }

@@ -23,7 +23,7 @@ describe("JwtTokenService", () => {
   const accessSecret = "test-access-secret";
   const refreshSecret = "test-refresh-secret";
 
-  const payload = { id: "user-123" };
+  const payload = { id: "user-123", githubVerified: true };
 
   beforeEach(() => {
     jwtService = {

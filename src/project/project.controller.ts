@@ -32,6 +32,7 @@ import { UpdateProjectDto } from "../dto/UpdateProject.dto";
 import { ProjectIdDto } from "../dto/GetDeleteProject.dto";
 import { SearchProjectsDto } from "../dto/SearchProjects.dto";
 import { ProjectDto } from "../dto/ProjectDto";
+import { GithubVerifiedGuard } from "../auth/guards/GithubVerified.guard";
 
 @ApiTags("Projects")
 @ApiBearerAuth()
@@ -39,7 +40,7 @@ import { ProjectDto } from "../dto/ProjectDto";
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, GithubVerifiedGuard)
   @Post()
   @ApiOperation({ summary: "Create a project" })
   @ApiCreatedResponse({
@@ -73,18 +74,13 @@ export class ProjectController {
   @ApiNotFoundResponse({
     description: "Project not found",
   })
-  async get(
-    @Query() dto: ProjectIdDto,
-  ): Promise<ProjectDto> {
-    const project = await this.projectService.findById(
-      dto.id,
-      {
-        applications: true,
-        category: true,
-        owner: true,
-        tags: true,
-      },
-    );
+  async get(@Query() dto: ProjectIdDto): Promise<ProjectDto> {
+    const project = await this.projectService.findById(dto.id, {
+      applications: true,
+      category: true,
+      owner: true,
+      tags: true,
+    });
 
     return {
       id: project.id,
@@ -105,7 +101,7 @@ export class ProjectController {
     };
   }
 
-  @UseGuards(AuthGuard, ProjectGuard)
+  @UseGuards(AuthGuard, GithubVerifiedGuard, ProjectGuard)
   @Patch()
   @ApiOperation({ summary: "Update a project" })
   @ApiOkResponse({
@@ -124,7 +120,7 @@ export class ProjectController {
     await this.projectService.update(dto);
   }
 
-  @UseGuards(AuthGuard, ProjectGuard)
+  @UseGuards(AuthGuard, GithubVerifiedGuard, ProjectGuard)
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Delete a project" })
@@ -141,7 +137,7 @@ export class ProjectController {
     await this.projectService.delete(dto.id);
   }
 
-  @UseGuards(AuthGuard, ProjectGuard)
+  @UseGuards(AuthGuard, GithubVerifiedGuard, ProjectGuard)
   @Post("publish")
   @ApiOperation({ summary: "Publish a project" })
   @ApiOkResponse({

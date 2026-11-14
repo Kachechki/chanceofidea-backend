@@ -38,6 +38,9 @@ export class UserEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Column({ type: "boolean" })
+  githubVerified: boolean;
+
   @JoinColumn()
   @OneToMany(() => ProjectEntity, (project) => project.owner, {
     onDelete: "SET NULL",

@@ -7,5 +7,5 @@ export interface IRequestWithRefresh extends Request {
   headers: {
     authorization?: string;
   };
-  user: { id: string };
+  user: { id: string; githubVerified: boolean };
 }
