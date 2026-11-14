@@ -45,6 +45,7 @@ describe("AuthService", () => {
 
   const userId = "user-123";
   const githubAccessToken = "github-access-token";
+  const settingsId = "settings-123";
 
   const profileData = {
     id: 12345,
@@ -100,7 +101,7 @@ describe("AuthService", () => {
     };
 
     settingsService = {
-      createDefault: jest.fn().mockRejectedValue(undefined),
+      createDefault: jest.fn().mockResolvedValue(settingsId),
     };
 
     service = new AuthService(
@@ -110,7 +111,7 @@ describe("AuthService", () => {
       githubAccessService as unknown as GithubAccessService,
       mailService as unknown as MailService,
       redisService as unknown as RedisService,
-      SettingsService as unknown as SettingsService,
+      settingsService as unknown as SettingsService,
     );
 
     global.fetch = jest
@@ -172,6 +173,8 @@ describe("AuthService", () => {
         avatarUrl: profileData.avatar_url,
         login: profileData.login,
         githubId: profileData.id,
+        githubVerified: true,
+        settingsId,
       });
 
       expect(userService.save).toHaveBeenCalledTimes(1);
@@ -193,6 +196,7 @@ describe("AuthService", () => {
 
       expect(jwtService.sign).toHaveBeenCalledWith({
         id: userId,
+        githubVerified: true,
       });
 
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
@@ -415,7 +419,11 @@ describe("AuthService", () => {
       await service.finishEmailAuth(authData);
 
       expect(userService.save).toHaveBeenCalledTimes(1);
-      expect(userService.save).toHaveBeenCalledWith({ email });
+      expect(userService.save).toHaveBeenCalledWith({
+        email,
+        githubVerified: false,
+        settingsId,
+      });
     });
 
     it("should delete the verification code after successful verification", async () => {
@@ -433,6 +441,7 @@ describe("AuthService", () => {
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
       expect(jwtService.sign).toHaveBeenCalledWith({
         id: userId,
+        githubVerified: false,
       });
     });
 
@@ -442,6 +451,11 @@ describe("AuthService", () => {
 
     it("should perform operations in the correct order", async () => {
       const callOrder: string[] = [];
+
+      settingsService.createDefault.mockImplementation(async () => {
+        callOrder.push("settings-create");
+        return settingsId;
+      });
 
       redisService.get.mockImplementation(async () => {
         callOrder.push("redis-get");
@@ -466,6 +480,7 @@ describe("AuthService", () => {
 
       expect(callOrder).toEqual([
         "redis-get",
+        "settings-create",
         "user-save",
         "redis-delete",
         "jwt-sign",

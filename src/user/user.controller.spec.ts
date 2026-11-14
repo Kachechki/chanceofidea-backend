@@ -46,12 +46,18 @@ describe("UserController", () => {
       login: "test-user",
       createdAt: new Date("2026-01-01T12:00:00.000Z"),
       avatarUrl: "https://example.com/avatar.png",
+      email: "test@example.com",
       projects: [
         {
           id: "project-123",
           title: "Test project",
         },
       ],
+      settings: {
+        id: "settings-123",
+        prefferedLocale: "EN",
+        theme: "LIGHT",
+      },
       githubId: 12345,
     } as unknown as UserEntity;
 
@@ -73,6 +79,8 @@ describe("UserController", () => {
         createdAt: user.createdAt,
         avatarUrl: user.avatarUrl,
         projects: user.projects,
+        email: user.email,
+        settings: user.settings,
       });
     });
 
@@ -84,6 +92,7 @@ describe("UserController", () => {
       expect(userService.findById).toHaveBeenCalledTimes(1);
       expect(userService.findById).toHaveBeenCalledWith(userId, {
         projects: true,
+        settings: true,
       });
     });
 

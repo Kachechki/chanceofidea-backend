@@ -99,6 +99,11 @@ describe("ProjectController", () => {
           bio: null,
           createdAt: new Date(),
           login: "test-user",
+          settings: {
+            id: "settings-1",
+            prefferedLocale: "EN",
+            theme: "LIGHT",
+          },
         },
         repositoryName: "my-repo",
         status: "active",
@@ -127,7 +132,9 @@ describe("ProjectController", () => {
         {
           applications: true,
           category: true,
-          owner: true,
+          owner: {
+            settings: true,
+          },
           tags: true,
         },
       );
