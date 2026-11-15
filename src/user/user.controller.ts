@@ -1,6 +1,7 @@
-import { Controller, Get, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -48,7 +49,25 @@ export class UserController {
       avatarUrl: user.avatarUrl,
       projects: user.projects,
       email: user.email ?? undefined,
-      settings: user.settings ?? undefined
+      settings: user.settings ?? undefined,
+      onboardingPassed: user.onboardingPassed,
     };
+  }
+
+  @UseGuards(AuthGuard)
+  @Post("pass-onboarding")
+  @ApiOperation({
+    summary: "Mark the authenticated user's onboarding as completed",
+    description: "Updates the authenticated user's onboarding status.",
+  })
+  @ApiNoContentResponse({
+    description: "Onboarding marked as completed successfully",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Authentication is required",
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async passOboarding(@Req() req: IRequestWithRefresh): Promise<void> {
+    await this.userService.passOnboarding(req.user.id);
   }
 }

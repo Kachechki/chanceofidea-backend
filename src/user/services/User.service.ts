@@ -3,7 +3,6 @@ import { FindOptionsRelations, Repository } from "typeorm";
 import { UserEntity } from "../entities/User.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ISaveUser } from "../../types/SaveUser.interface";
-import { QueueAction } from "rxjs/internal/scheduler/QueueAction";
 
 interface IUserService {
   save(data: ISaveUser): Promise<string>;
@@ -12,6 +11,7 @@ interface IUserService {
     relations?: FindOptionsRelations<UserEntity>,
   ): Promise<UserEntity>;
   findByEmail(email: string): Promise<UserEntity>;
+  passOnboarding(userId: string): Promise<void>;
 }
 
 @Injectable()
@@ -43,7 +43,8 @@ export class UserService implements IUserService {
         createdAt: existingUser ? new Date() : undefined,
         updatedAt: new Date(),
         email: data.email ?? undefined,
-        settingsId: data.settingsId ?? undefined
+        settingsId: data.settingsId ?? undefined,
+        passedOnboarding: data.passedOnboarding ?? undefined,
       })
     ).id;
   }
@@ -63,5 +64,11 @@ export class UserService implements IUserService {
     if (!user) throw new NotFoundException("User not found");
 
     return user;
+  }
+
+  async passOnboarding(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    user.onboardingPassed = true;
+    await this.repository.save(user);
   }
 }

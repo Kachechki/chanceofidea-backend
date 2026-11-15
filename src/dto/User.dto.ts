@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
+  IsBoolean,
   IsDate,
   IsEmail,
   IsOptional,
@@ -88,4 +89,11 @@ export class UserDto {
   })
   @IsOptional()
   settings?: SettingsDto;
+
+  @ApiProperty({
+    description: "Has the user passed the onboarding",
+    example: false,
+  })
+  @IsBoolean()
+  onboardingPassed: boolean;
 }

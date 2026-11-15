@@ -7,4 +7,5 @@ export interface ISaveUser {
   email?: string;
   githubVerified?: boolean;
   settingsId?: string;
+  passedOnboarding?: string;
 }

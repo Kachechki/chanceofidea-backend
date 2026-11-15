@@ -42,6 +42,9 @@ export class UserEntity {
   @Column({ type: "boolean" })
   githubVerified: boolean;
 
+  @Column({ type: "boolean", default: false })
+  onboardingPassed: boolean;
+
   @OneToMany(() => ProjectEntity, (project) => project.owner, {
     onDelete: "SET NULL",
   })

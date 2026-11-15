@@ -190,4 +190,74 @@ describe("UserService", () => {
       await expect(service.findById("user-123")).rejects.toThrow(error);
     });
   });
+  describe("passOnboarding", () => {
+    const userId = "user-123";
+
+    it("should mark the user's onboarding as passed", async () => {
+      const user = {
+        id: userId,
+        onboardingPassed: false,
+      } as UserEntity;
+
+      repository.findOne.mockResolvedValue(user);
+      repository.save.mockResolvedValue({
+        ...user,
+        onboardingPassed: true,
+      } as UserEntity);
+
+      await service.passOnboarding(userId);
+
+      expect(user.onboardingPassed).toBe(true);
+
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: userId,
+          onboardingPassed: true,
+        }),
+      );
+    });
+
+    it("should find the user by ID before updating onboarding", async () => {
+      const user = {
+        id: userId,
+        onboardingPassed: false,
+      } as UserEntity;
+
+      repository.findOne.mockResolvedValue(user);
+      repository.save.mockResolvedValue(user);
+
+      await service.passOnboarding(userId);
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: userId },
+        relations: undefined,
+      });
+    });
+
+    it("should throw NotFoundException if the user does not exist", async () => {
+      repository.findOne.mockResolvedValue(null);
+
+      await expect(service.passOnboarding(userId)).rejects.toThrow(
+        new NotFoundException("User not found"),
+      );
+
+      expect(repository.save).not.toHaveBeenCalled();
+    });
+
+    it("should propagate errors if saving the updated user fails", async () => {
+      const user = {
+        id: userId,
+        onboardingPassed: false,
+      } as UserEntity;
+
+      const error = new Error("Database error");
+
+      repository.findOne.mockResolvedValue(user);
+      repository.save.mockRejectedValue(error);
+
+      await expect(service.passOnboarding(userId)).rejects.toThrow(error);
+
+      expect(user.onboardingPassed).toBe(true);
+    });
+  });
 });

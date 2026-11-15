@@ -1,5 +1,4 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { CanActivate } from "@nestjs/common";
 import { UserService } from "./services/User.service";
 import { UserEntity } from "./entities/User.entity";
 import { UserController } from "./user.controller";
@@ -17,15 +16,14 @@ describe("UserController", () => {
           provide: UserService,
           useValue: {
             findById: jest.fn(),
+            passOnboarding: jest.fn(),
           },
         },
       ],
     })
       .overrideGuard(AuthGuard)
       .useValue({
-        canActivate: jest
-          .fn()
-          .mockReturnValue(true),
+        canActivate: jest.fn().mockReturnValue(true),
       })
       .compile();
 
@@ -101,6 +99,31 @@ describe("UserController", () => {
       userService.findById.mockRejectedValue(error);
 
       await expect(controller.me(req)).rejects.toThrow(error);
+    });
+  });
+  describe("passOboarding", () => {
+    const userId = "user-123";
+
+    const req = {
+      user: {
+        id: userId,
+      },
+    } as any;
+
+    it("should mark the authenticated user as having passed onboarding", async () => {
+      userService.passOnboarding.mockResolvedValue(undefined);
+
+      await controller.passOboarding(req);
+
+      expect(userService.passOnboarding).toHaveBeenCalledTimes(1);
+      expect(userService.passOnboarding).toHaveBeenCalledWith(userId);
+    });
+
+    it("should propagate errors from UserService", async () => {
+      const error = new Error("Failed to pass onboarding");
+      userService.passOnboarding.mockRejectedValue(error);
+
+      await expect(controller.passOboarding(req)).rejects.toThrow(error);
     });
   });
 });
