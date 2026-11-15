@@ -1,9 +1,10 @@
-import { IsEmail, IsNumber } from "class-validator";
+import { IsEmail, IsString, Length } from "class-validator";
 
 export class FinishEmailAuthDto {
   @IsEmail()
   email: string;
 
-  @IsNumber()
-  code: number;
+  @IsString()
+  @Length(6, 6)
+  code: string;
 }

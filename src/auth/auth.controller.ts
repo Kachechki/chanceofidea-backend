@@ -39,7 +39,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refresh = req.get("refresh");
+    const refresh = req.cookies?.refresh;
     if (!refresh)
       throw new BadRequestException("No refresh found. Log in again");
 
@@ -66,7 +66,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const jwt = await this.authService.finishEmailAuth({
-      code: String(dto.code),
+      code: dto.code,
       email: dto.email,
     });
 
@@ -77,7 +77,7 @@ export class AuthController {
       secure: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 7 * 26 * 3600 * 1000,
+      maxAge: 7 * 24 * 3600 * 1000,
     });
   }
 }

@@ -33,5 +33,5 @@ export class CreateApplicationDto {
   })
   @IsOptional()
   @IsString()
-  porfolioUrl?: string;
+  portfolioUrl?: string;
 }

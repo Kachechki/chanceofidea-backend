@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Query,
   Req,
@@ -24,7 +26,6 @@ import { ApplicationService } from "./services/Application.service";
 import { AuthGuard } from "../auth/guards/Auth.guard";
 import { type IRequestWithRefresh } from "../types/RequestWithRefresh.interface";
 import { CreateApplicationDto } from "../dto/CreateApplication.dto";
-import { ProjectGuard } from "../project/guards/Project.guard";
 import { AcceptRejectApplicationDto } from "../dto/AcceptRejectApplication.dto";
 import { RejectApplicationDto } from "../dto/RejectApplication.dto";
 import { ApplicationDto } from "../dto/Application.dto";
@@ -62,7 +63,7 @@ export class ApplicationController {
         projectId: dto.projectId,
         whyMe: dto.whyMe,
         plan: dto.plan,
-        portfolioUrl: dto.porfolioUrl,
+        portfolioUrl: dto.portfolioUrl,
       },
       req.user.id,
     );
@@ -86,6 +87,7 @@ export class ApplicationController {
   @ApiConflictResponse({
     description: "One of the applications is already accepted",
   })
+  @HttpCode(HttpStatus.OK)
   async accept(
     @Query() dto: AcceptRejectApplicationDto,
     @Req() req: IRequestWithRefresh,
@@ -105,6 +107,7 @@ export class ApplicationController {
   @ApiNotFoundResponse({
     description: "Application not found",
   })
+  @HttpCode(HttpStatus.OK)
   async reject(
     @Query() queryDto: AcceptRejectApplicationDto,
     @Body() dto: RejectApplicationDto,

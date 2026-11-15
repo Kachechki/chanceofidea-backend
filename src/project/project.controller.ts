@@ -68,9 +68,6 @@ export class ProjectController {
     description: "Project retrieved successfully",
     type: ProjectDto,
   })
-  @ApiUnauthorizedResponse({
-    description: "Authentication is required",
-  })
   @ApiNotFoundResponse({
     description: "Project not found",
   })
@@ -147,7 +144,7 @@ export class ProjectController {
   @UseGuards(AuthGuard, GithubVerifiedGuard, ProjectGuard)
   @Post("publish")
   @ApiOperation({ summary: "Publish a project" })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     description: "Project published successfully",
   })
   @ApiUnauthorizedResponse({
@@ -169,9 +166,6 @@ export class ProjectController {
     description: "Projects matching the search criteria",
     type: ProjectDto,
     isArray: true,
-  })
-  @ApiUnauthorizedResponse({
-    description: "Authentication is required",
   })
   @ApiBadRequestResponse({
     description: "Invalid search parameters",

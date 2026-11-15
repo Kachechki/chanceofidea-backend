@@ -92,7 +92,7 @@ export class AuthService implements IAuthService {
   }
 
   async startEmailAuth(email: string): Promise<void> {
-    const code = randomInt(100_000, 1_000_000).toString();
+    const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
 
     const hmac = createHmac(
       "sha256",
@@ -129,13 +129,13 @@ export class AuthService implements IAuthService {
     );
 
     if (!isValid) throw new UnauthorizedException("The code is incorrect");
-    
+
     const settingsId = await this.settingsService.createDefault();
 
     const userId = await this.userService.save({
       email: data.email,
       githubVerified: false,
-      settingsId
+      settingsId,
     });
 
     await this.redisService.del(`email-verification:${data.email}`);

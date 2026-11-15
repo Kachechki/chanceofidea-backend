@@ -5,6 +5,7 @@ import { UdpateSettingsDto } from "../dto/UpdateSettings.dto";
 import { IRequestWithRefresh } from "../types/RequestWithRefresh.interface";
 import { PrefferedLocaleEnum } from "../enums/PrefferedLocale.enum";
 import { ThemeEnum } from "../enums/Theme.enum";
+import { AuthGuard } from "../auth/guards/Auth.guard";
 
 describe("SettingsController", () => {
   let controller: SettingsController;
@@ -26,7 +27,10 @@ describe("SettingsController", () => {
           useValue: settingsService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     controller = module.get<SettingsController>(SettingsController);
   });
