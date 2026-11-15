@@ -98,6 +98,7 @@ export class ProjectController {
           prefferedLocale: project.owner.settings.prefferedLocale,
           theme: project.owner.settings.theme,
         },
+        onboardingPassed: project.owner.onboardingPassed
       },
       repositoryName: project.repositoryName,
       status: project.status,
