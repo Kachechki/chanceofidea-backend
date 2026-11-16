@@ -12,6 +12,7 @@ import {
 import { ProjectDto } from "./ProjectDto";
 import { ApplicationDto } from "./Application.dto";
 import { SettingsDto } from "./Settings.dto";
+import { NotificationDto } from "./Notification.dto";
 
 export class UserDto {
   @ApiProperty({
@@ -96,4 +97,11 @@ export class UserDto {
   })
   @IsBoolean()
   onboardingPassed: boolean;
+
+  @ApiPropertyOptional({
+    description: "User's unread notifications",
+    type: () => NotificationDto,
+  })
+  @IsOptional()
+  notifications?: NotificationDto[];
 }

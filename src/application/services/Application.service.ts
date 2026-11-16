@@ -5,6 +5,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { ICreateApplication } from "../../types/CraeteApplication.interface";
@@ -19,6 +20,8 @@ import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 import { ProjectService } from "../../project/services/Project.service";
 import { UserService } from "../../user/services/User.service";
 import { UserEntity } from "../../user/entities/User.entity";
+import { NotifiactionService } from "../../notification/services/Notification.service";
+import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
 
 interface IApplicationService {
   create(data: ICreateApplication, userId: string): Promise<void>;
@@ -43,10 +46,12 @@ export class ApplicationService implements IApplicationService {
     private readonly userService: UserService,
     @Inject(forwardRef(() => ProjectService))
     private readonly projectService: ProjectService,
+    @Inject(forwardRef(() => NotifiactionService))
+    private readonly notificationService: NotifiactionService,
   ) {}
 
   async create(data: ICreateApplication, userId: string): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       // Serialize application creation for this project.
       await manager.getRepository(ProjectEntity).findOneOrFail({
         where: { id: data.projectId },
@@ -94,7 +99,7 @@ export class ApplicationService implements IApplicationService {
         );
       }
 
-      await applicationRepository.save({
+      return await applicationRepository.save({
         ...data,
         project: { id: data.projectId },
         applicant: { id: userId },
@@ -102,6 +107,15 @@ export class ApplicationService implements IApplicationService {
         updatedAt: new Date(),
         status: ApplicationStatusEnum.PENDING,
       });
+    });
+
+    if (!result.id) throw new InternalServerErrorException();
+
+    await this.notificationService.create({
+      topic: "New application",
+      body: `${result.applicant.login} has sent you an application for adopting ${result.project.repositoryName}`,
+      type: NotificationTypeEnum.NEW_APPLICATION,
+      recieverId: result.project.owner.id,
     });
   }
 
@@ -124,12 +138,19 @@ export class ApplicationService implements IApplicationService {
     application.status = ApplicationStatusEnum.REJECTED;
     if (reason) application.rejectReason = reason;
 
+    await this.notificationService.create({
+      topic: "Application rejected",
+      body: `Your application for adopting ${application.project.repositoryName} has been rejected by the owner.`,
+      type: NotificationTypeEnum.APPLICATION_REJECTED,
+      recieverId: application.applicant.id,
+    });
+
     await this.repository.save(application);
   }
 
   async accept(id: string, userId: string): Promise<void> {
     await this.findOwnedPending(id, userId);
-    const transferSessionId = await this.dataSource.transaction(
+    const transferSession = await this.dataSource.transaction(
       async (manager) => {
         const applicationRepository = manager.getRepository(ApplicationEntity);
         const projectRepository = manager.getRepository(ProjectEntity);
@@ -185,12 +206,21 @@ export class ApplicationService implements IApplicationService {
           createdAt: new Date(),
         });
 
-        return transferSession.id;
+        return transferSession;
       },
     );
 
+    if (!transferSession.id) throw new InternalServerErrorException();
+
+    await this.notificationService.create({
+      topic: "Applicatoin accepted",
+      body: `Your application for adopting ${transferSession.project.repositoryName} has been accepted!`,
+      type: NotificationTypeEnum.APPLICATION_ACCEPTED,
+      recieverId: transferSession.applicant.id,
+    });
+
     this.eventEmitter.emit("application.accepted", {
-      transferSessionId,
+      transferSessionId: transferSession.id,
     });
   }
 

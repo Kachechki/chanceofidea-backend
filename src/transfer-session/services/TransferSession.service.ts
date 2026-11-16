@@ -2,6 +2,8 @@ import {
   Injectable,
   NotAcceptableException,
   NotFoundException,
+  forwardRef,
+  Inject,
 } from "@nestjs/common";
 import { FindOptionsRelations, Repository } from "typeorm";
 import { TransferSessionEntity } from "../entities/TransferSession.entity";
@@ -34,6 +36,7 @@ export class TransferSessionService implements ITransferSessionService {
     private readonly eventEmitter: EventEmitter2,
     private readonly userService: UserService,
     private readonly githubService: GithubService,
+    @Inject(forwardRef(() => ApplicationService))
     private readonly applicationService: ApplicationService,
   ) {}
 

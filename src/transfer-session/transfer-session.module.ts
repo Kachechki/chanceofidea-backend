@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { TransferSessionService } from "./services/TransferSession.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TransferSessionEntity } from "./entities/TransferSession.entity";
@@ -11,10 +11,10 @@ import { ApplicationModule } from "../application/application.module";
 @Module({
   imports: [
     TypeOrmModule.forFeature([TransferSessionEntity]),
-    GithubModule,
+    forwardRef(() => GithubModule),
     UserModule,
     AuthModule,
-    ApplicationModule,
+    forwardRef(() => ApplicationModule),
   ],
   providers: [TransferSessionService],
   controllers: [TransferSessionController],

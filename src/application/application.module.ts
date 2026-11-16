@@ -6,6 +6,7 @@ import { AuthModule } from "../auth/auth.module";
 import { ProjectModule } from "../project/project.module";
 import { UserModule } from "../user/user.module";
 import { ApplicationService } from "./services/Application.service";
+import { NotificationModule } from "../notification/notification.module";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ApplicationService } from "./services/Application.service";
     AuthModule,
     forwardRef(() => ProjectModule),
     UserModule,
+    forwardRef(() => NotificationModule),
   ],
   controllers: [ApplicationController],
   providers: [ApplicationService],

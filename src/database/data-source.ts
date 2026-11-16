@@ -8,6 +8,7 @@ import { GithubAccessEntity } from "../auth/entities/GithubAccess.entity";
 import { ApplicationEntity } from "../application/entities/Application.entity";
 import { TransferSessionEntity } from "../transfer-session/entities/TransferSession.entity";
 import { SettingsEntity } from "../settings/entities/Settings.entity";
+import { NotificationEntity } from "../notification/entites/Notification.entity";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ export const AppDataSource = new DataSource({
     ApplicationEntity,
     TransferSessionEntity,
     SettingsEntity,
+    NotificationEntity,
   ],
   synchronize: false,
   migrations: [__dirname + "/migrations/*{.js,.ts}"],

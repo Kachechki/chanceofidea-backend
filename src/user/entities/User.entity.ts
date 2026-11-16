@@ -12,6 +12,7 @@ import { ProjectEntity } from "../../project/entities/Project.entity";
 import { GithubAccessEntity } from "../../auth/entities/GithubAccess.entity";
 import { ApplicationEntity } from "../../application/entities/Application.entity";
 import { SettingsEntity } from "../../settings/entities/Settings.entity";
+import { NotificationEntity } from "../../notification/entites/Notification.entity";
 
 @Entity()
 export class UserEntity {
@@ -63,4 +64,7 @@ export class UserEntity {
   @JoinColumn()
   @OneToOne(() => SettingsEntity, (settings) => settings.user)
   settings: SettingsEntity;
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.user)
+  notifications: NotificationEntity[];
 }
