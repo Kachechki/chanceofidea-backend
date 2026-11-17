@@ -53,10 +53,13 @@ export class ApplicationService implements IApplicationService {
   async create(data: ICreateApplication, userId: string): Promise<void> {
     const result = await this.dataSource.transaction(async (manager) => {
       // Serialize application creation for this project.
-      await manager.getRepository(ProjectEntity).findOneOrFail({
-        where: { id: data.projectId },
-        lock: { mode: "pessimistic_write" }, // lock the row
-      });
+      const project = await manager
+        .getRepository(ProjectEntity)
+        .findOneOrFail({
+          where: { id: data.projectId },
+          relations: { owner: true },
+          lock: { mode: "pessimistic_write" },
+        });
 
       const applicationRepository = manager.getRepository(ApplicationEntity);
       const userRepository = manager.getRepository(UserEntity);
@@ -99,7 +102,7 @@ export class ApplicationService implements IApplicationService {
         );
       }
 
-      return await applicationRepository.save({
+      const application = await applicationRepository.save({
         ...data,
         project: { id: data.projectId },
         applicant: { id: userId },
@@ -107,9 +110,11 @@ export class ApplicationService implements IApplicationService {
         updatedAt: new Date(),
         status: ApplicationStatusEnum.PENDING,
       });
+
+      return { application, applicant: user, project };
     });
 
-    if (!result.id) throw new InternalServerErrorException();
+    if (!result.application.id) throw new InternalServerErrorException();
 
     await this.notificationService.create({
       topic: "New application",

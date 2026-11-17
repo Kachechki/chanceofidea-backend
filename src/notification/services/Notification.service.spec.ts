@@ -7,6 +7,7 @@ import { NotifiactionService } from "./Notification.service";
 import { NotificationEntity } from "../entites/Notification.entity";
 import { ICreateNotification } from "../../types/CreateNotification.interface";
 import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
+import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 
 describe("NotifiactionService", () => {
   let service: NotifiactionService;
@@ -24,6 +25,10 @@ describe("NotifiactionService", () => {
             findBy: jest.fn(),
           },
         },
+        {
+          provide: TransferSessionService,
+          useValue: { findById: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -40,7 +45,8 @@ describe("NotifiactionService", () => {
       topic: "Project application",
       body: "Someone has applied to your project.",
       type: NotificationTypeEnum.NEW_APPLICATION,
-    } as ICreateNotification;
+      recieverId: "user-123",
+    };
 
     it("should create a notification and return its ID", async () => {
       const savedNotification = {
@@ -58,6 +64,7 @@ describe("NotifiactionService", () => {
         topic: notificationData.topic,
         body: notificationData.body,
         type: notificationData.type,
+        user: { id: notificationData.recieverId },
       });
 
       expect(result).toBe(savedNotification.id);

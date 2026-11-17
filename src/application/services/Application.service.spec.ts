@@ -18,6 +18,8 @@ import { ApplicationStatusEnum } from "../../enums/ApplicationStatus.enum";
 import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 import { ProjectService } from "../../project/services/Project.service";
 import { UserService } from "../../user/services/User.service";
+import { NotifiactionService } from "../../notification/services/Notification.service";
+import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
 
 describe("ApplicationService", () => {
   let service: ApplicationService;
@@ -68,6 +70,10 @@ describe("ApplicationService", () => {
     findByUser: jest.Mock;
   };
 
+  let notificationService: {
+    create: jest.Mock;
+  };
+
   const projectId = "project-1";
   const userId = "user-1";
   const ownerId = "owner-1";
@@ -76,11 +82,13 @@ describe("ApplicationService", () => {
   const project = {
     id: projectId,
     status: ProjectStatusEnum.PUBLISHED,
+    repositoryName: "project-repository",
     owner: { id: ownerId },
   };
 
   const applicant = {
     id: userId,
+    login: "applicant-login",
   };
 
   const application = {
@@ -106,21 +114,26 @@ describe("ApplicationService", () => {
     transactionApplicationRepository = {
       count: jest.fn().mockResolvedValue(0),
       exists: jest.fn().mockResolvedValue(false),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: jest.fn().mockImplementation(async (value) => ({
+        ...value,
+        id: applicationId,
+      })),
       findOne: jest.fn(),
     };
 
     userRepository = {
       findOne: jest.fn().mockResolvedValue({
         id: userId,
+        login: "applicant-login",
         projects: [],
       }),
     };
 
     transferSessionRepository = {
-      save: jest.fn().mockResolvedValue({
+      save: jest.fn().mockImplementation(async (value) => ({
+        ...value,
         id: "transfer-session-1",
-      }),
+      })),
     };
 
     manager = {
@@ -151,6 +164,10 @@ describe("ApplicationService", () => {
       findByUser: jest.fn(),
     };
 
+    notificationService = {
+      create: jest.fn().mockResolvedValue("notification-1"),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ApplicationService,
@@ -162,6 +179,7 @@ describe("ApplicationService", () => {
         { provide: EventEmitter2, useValue: eventEmitter },
         { provide: UserService, useValue: userService },
         { provide: ProjectService, useValue: projectService },
+        { provide: NotifiactionService, useValue: notificationService },
       ],
     }).compile();
 
@@ -178,6 +196,7 @@ describe("ApplicationService", () => {
 
       expect(projectRepository.findOneOrFail).toHaveBeenCalledWith({
         where: { id: projectId },
+        relations: { owner: true },
         lock: { mode: "pessimistic_write" },
       });
 
@@ -195,6 +214,13 @@ describe("ApplicationService", () => {
           updatedAt: expect.any(Date),
         }),
       );
+      expect(notificationService.create).toHaveBeenCalledWith({
+        topic: "New application",
+        body:
+          "applicant-login has sent you an application for adopting project-repository",
+        type: NotificationTypeEnum.NEW_APPLICATION,
+        recieverId: ownerId,
+      });
     });
 
     it("throws NotFoundException when the user does not exist", async () => {
