@@ -1,51 +1,103 @@
 # Chance of Idea — Backend
 
 Chance of Idea is a marketplace for unfinished projects. This repository contains
-the REST API used to publish projects, browse and filter listings, apply to take
-over a project, and coordinate repository transfers. Users authenticate with
-GitHub.
+the REST API for publishing projects, browsing listings, applying to adopt
+projects, coordinating GitHub repository transfers, and receiving notifications.
 
-The API is built with NestJS and TypeScript, and uses PostgreSQL for persistence.
+The API is built with NestJS and TypeScript. PostgreSQL stores application data,
+Redis supports caching and queues, and SMTP is used for email authentication
+messages.
 
 ## Features
 
-- GitHub OAuth authentication and JWT-protected endpoints
+- GitHub OAuth and email authentication
+- JWT access and refresh tokens stored through secure cookies
 - Project creation, editing, publishing, search, and deletion
 - Categories and tags for organizing project listings
 - Applications to take over projects, including acceptance and rejection
-- GitHub repository lookup and transfer-session confirmations
+- GitHub repository lookup and repository-transfer sessions
+- User profiles, onboarding state, locale, and theme settings
+- User notifications
 - Interactive API reference at `/docs`
 
 ## Requirements
 
 - Node.js 20 or later and npm
 - PostgreSQL 17 (or Docker and Docker Compose)
+- Redis
 - A GitHub OAuth App
+- An SMTP account for email authentication
 
 ## Configuration
 
-Create a `.env` file in the repository root. The following variables are used by
-the application:
+Create a `.env` file in the repository root. `FRONTEND_URL` is required at
+startup.
 
 | Variable | Description |
 | --- | --- |
-| `PORT` | HTTP port for the API (defaults to `3000`) |
-| `DB_HOST` | PostgreSQL hostname (`localhost` for a local database, `db` in Docker Compose) |
-| `DB_PORT` | PostgreSQL port (normally `5432`) |
+| `PORT` | API HTTP port; defaults to `3000` |
+| `FRONTEND_URL` | Trusted frontend origin used by CSRF protection |
+| `DB_HOST` | PostgreSQL hostname; defaults to `db` |
+| `DB_PORT` | PostgreSQL port; defaults to `5432` for migrations |
 | `DB_USER` | PostgreSQL username |
 | `DB_PASSWORD` | PostgreSQL password |
 | `DB_NAME` | PostgreSQL database name |
+| `DB_SSL` | Set to `true` to enable PostgreSQL SSL |
+| `REDIS_HOST` | Redis hostname; defaults to `redis` |
+| `REDIS_PORT` | Redis port; defaults to `6379` |
 | `GITHUB_CLIENT_ID` | GitHub OAuth App client ID |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret |
-| `GITHUB_TOKEN_ENCRYPTION_KEY` | Key used to encrypt stored GitHub access tokens |
+| `GITHUB_APP_ID` | GitHub App ID |
+| `GITHUB_PRIVATE_KEY` | GitHub App private key |
+| `GITHUB_TOKEN_ENCRYPTION_KEY` | Key used to encrypt GitHub access tokens |
 | `JWT_ACCESS_SECRET` | Secret used to sign access tokens |
 | `JWT_REFRESH_SECRET` | Secret used to sign refresh tokens |
+| `MAIL_VERIFICATION_SECRET` | Secret used when validating email verification codes |
+| `SMTP_HOST` | SMTP server hostname |
+| `SMTP_PORT` | SMTP server port |
+| `SMTP_FROM` | Sender address used for email |
+| `SMTP_USER` | SMTP account username |
+| `SMTP_PASSWORD` | SMTP account password |
 
 Use strong, unique secrets for the encryption key and JWT secrets. Do not commit
 `.env` or production secrets to source control.
 
-Configure the GitHub OAuth App to use the callback URL for your environment. For
-a local server on the default port, the API callback route is
+For local development, an example configuration is:
+
+```dotenv
+PORT=3000
+FRONTEND_URL=http://localhost:3001
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=admin
+DB_PASSWORD=admin
+DB_NAME=database
+DB_SSL=false
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_APP_ID=
+GITHUB_PRIVATE_KEY=
+GITHUB_TOKEN_ENCRYPTION_KEY=
+
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+MAIL_VERIFICATION_SECRET=
+
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_FROM=
+SMTP_USER=
+SMTP_PASSWORD=
+```
+
+Configure the GitHub OAuth App callback URL for your environment. For a local
+server on the default port, the API callback route is:
+
 `http://localhost:3000/auth/oauth_callback`.
 
 ## Run locally
@@ -56,8 +108,8 @@ Install dependencies:
 npm ci
 ```
 
-Start PostgreSQL and set `DB_HOST` to the address reachable from your local
-machine, typically `localhost`. Apply the database migrations:
+Start PostgreSQL and Redis, then set `DB_HOST=localhost` and
+`REDIS_HOST=localhost` in `.env`. Apply the database migrations:
 
 ```bash
 npm run migration:run
@@ -83,14 +135,14 @@ npm run start:prod
 ## Run with Docker Compose
 
 Configure the variables used by `docker-compose.yaml` in `.env`, including
-PostgreSQL credentials and `PORT`. The Compose service configures the backend to
-reach PostgreSQL at `db`.
+PostgreSQL credentials, Redis settings, and `PORT`. The Compose services expose
+PostgreSQL on `DB_PORT` and Redis on `REDIS_PORT`.
 
-Build the backend image and start PostgreSQL:
+Build the backend image and start the database and Redis:
 
 ```bash
 docker compose build backend
-docker compose up -d db
+docker compose up -d db redis
 ```
 
 Once PostgreSQL is ready, apply migrations from the backend container:
@@ -106,24 +158,31 @@ docker compose up backend
 ```
 
 The Compose file publishes the API and PostgreSQL ports configured in `.env`.
+The backend container uses `DB_HOST=db` and `REDIS_HOST=redis`.
 
 ## API overview
 
-The full request and response schemas are documented in the interactive
-reference at `/docs`. The main routes are:
+The full request and response schemas are available at `/docs`.
 
-| Area | Routes |
+| Area | Main routes |
 | --- | --- |
-| Authentication | `GET /auth/oauth_callback` |
-| Users | `GET /user/me` |
-| Projects | `POST /project`, `GET /project`, `GET /project/projects`, `PATCH /project`, `DELETE /project`, `POST /project/publish` |
+| Authentication | `GET /auth/oauth_callback`, `GET /auth/refresh`, `POST /auth/email/start`, `POST /auth/email/finish` |
+| Users | `GET /user/me`, `POST /user/pass-onboarding` |
+| Settings | `PATCH /settings/update` |
+| Projects | `POST /project`, `GET /project`, `PATCH /project`, `DELETE /project`, `POST /project/publish`, `GET /project/projects` |
 | Applications | `POST /application`, `POST /application/accept`, `POST /application/reject`, `GET /application/incoming`, `GET /application/outcoming` |
 | Categories and tags | `GET /category`, `GET /tag` |
 | GitHub | `GET /github/repositories` |
+| Notifications | `GET /notification/all`, `DELETE /notification/read`, `DELETE /notification/read-all` |
 | Transfer sessions | `POST /transfer-session/i-have-recieved`, `POST /transfer-session/i-dont-want` |
 
-All routes except the OAuth callback require authentication. Project and
-application routes that modify a project also enforce project-owner permissions.
+Most protected routes require a bearer access token or a valid refresh cookie.
+Project mutation routes also require GitHub verification and project ownership.
+The OAuth callback and email-authentication start/finish routes establish the
+access and refresh-token session.
+
+The API sets refresh tokens in the HTTP-only `refresh` cookie and returns access
+tokens in the `x-access-token` response header.
 
 ## Database migrations
 

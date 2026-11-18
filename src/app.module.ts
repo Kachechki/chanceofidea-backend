@@ -36,6 +36,7 @@ import MailConfig from "./config/Mail.config";
 import { SettingsEntity } from "./settings/entities/Settings.entity";
 import { NotificationModule } from "./notification/notification.module";
 import { NotificationEntity } from "./notification/entites/Notification.entity";
+import { AppealModule } from './appeal/appeal.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -98,6 +99,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     RedisModule,
     SettingsModule,
     NotificationModule,
+    AppealModule,
   ],
 })
 export class AppModule {}
