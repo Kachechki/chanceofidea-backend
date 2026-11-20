@@ -3,6 +3,7 @@ import { UserService } from "../../user/services/User.service";
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { Octokit } from "octokit";
@@ -70,9 +71,20 @@ export class AuthService implements IAuthService {
 
     const { data: profile } = await octokit.rest.users.getAuthenticated();
 
+    let existingUserId;
+    if (profile.email) {
+      try {
+        const existingUser = await this.userService.findByEmail(profile.email);
+        existingUserId = existingUser.id;
+      } catch (err) {
+        if (err! instanceof NotFoundException) throw err;
+      }
+    }
+
     const settingsId = await this.settingsService.createDefault();
 
     const userId = await this.userService.save({
+      id: existingUserId ?? undefined,
       avatarUrl: profile.avatar_url,
       login: profile.login,
       githubId: profile.id,

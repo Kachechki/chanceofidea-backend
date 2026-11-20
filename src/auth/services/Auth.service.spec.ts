@@ -198,7 +198,7 @@ describe("AuthService", () => {
       expect(jwtService.sign).toHaveBeenCalledWith({
         id: userId,
         githubVerified: true,
-        role: UserRoleEnum.USER
+        role: UserRoleEnum.USER,
       });
 
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
@@ -444,7 +444,7 @@ describe("AuthService", () => {
       expect(jwtService.sign).toHaveBeenCalledWith({
         id: userId,
         githubVerified: false,
-        role: UserRoleEnum.USER
+        role: UserRoleEnum.USER,
       });
     });
 
