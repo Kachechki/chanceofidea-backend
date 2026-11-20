@@ -3,7 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { UserService } from "../../user/services/User.service";
 import { JwtTokenService } from "./Jwt.service";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 
 describe("JwtTokenService", () => {
   let service: JwtTokenService;
@@ -24,7 +24,11 @@ describe("JwtTokenService", () => {
   const accessSecret = "test-access-secret";
   const refreshSecret = "test-refresh-secret";
 
-  const payload = { id: "user-123", githubVerified: true, role:  UserRoleEnum.USER };
+  const payload = {
+    id: "user-123",
+    githubVerified: true,
+    role: UserRoleEnum.USER,
+  };
 
   beforeEach(() => {
     jwtService = {

@@ -1,6 +1,10 @@
-import { BadRequestException, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
 import { AdminGuard } from "./Admin.guard";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 import { type IRequestWithRefresh } from "../../types/RequestWithRefresh.interface";
 
 describe("AdminGuard", () => {

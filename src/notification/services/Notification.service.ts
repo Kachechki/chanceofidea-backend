@@ -11,7 +11,7 @@ import { Repository } from "typeorm";
 import { OnEvent } from "@nestjs/event-emitter";
 import { type ITransferResultsPayload } from "../../types/TransferResultsPayload.interface";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
-import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../../enums/NotificationType.enum";
 
 interface INotifiactionService {
   create(data: ICreateNotification): Promise<string>;

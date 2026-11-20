@@ -21,7 +21,7 @@ import { ProjectService } from "../../project/services/Project.service";
 import { UserService } from "../../user/services/User.service";
 import { UserEntity } from "../../user/entities/User.entity";
 import { NotifiactionService } from "../../notification/services/Notification.service";
-import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../../enums/NotificationType.enum";
 
 interface IApplicationService {
   create(data: ICreateApplication, userId: string): Promise<void>;
@@ -53,13 +53,11 @@ export class ApplicationService implements IApplicationService {
   async create(data: ICreateApplication, userId: string): Promise<void> {
     const result = await this.dataSource.transaction(async (manager) => {
       // Serialize application creation for this project.
-      const project = await manager
-        .getRepository(ProjectEntity)
-        .findOneOrFail({
-          where: { id: data.projectId },
-          relations: { owner: true },
-          lock: { mode: "pessimistic_write" },
-        });
+      const project = await manager.getRepository(ProjectEntity).findOneOrFail({
+        where: { id: data.projectId },
+        relations: { owner: true },
+        lock: { mode: "pessimistic_write" },
+      });
 
       const applicationRepository = manager.getRepository(ApplicationEntity);
       const userRepository = manager.getRepository(UserEntity);

@@ -19,7 +19,7 @@ import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 import { ProjectService } from "../../project/services/Project.service";
 import { UserService } from "../../user/services/User.service";
 import { NotifiactionService } from "../../notification/services/Notification.service";
-import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../../enums/NotificationType.enum";
 
 describe("ApplicationService", () => {
   let service: ApplicationService;
@@ -216,8 +216,7 @@ describe("ApplicationService", () => {
       );
       expect(notificationService.create).toHaveBeenCalledWith({
         topic: "New application",
-        body:
-          "applicant-login has sent you an application for adopting project-repository",
+        body: "applicant-login has sent you an application for adopting project-repository",
         type: NotificationTypeEnum.NEW_APPLICATION,
         recieverId: ownerId,
       });

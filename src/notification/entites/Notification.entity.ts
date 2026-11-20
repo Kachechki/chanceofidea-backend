@@ -5,7 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
-import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../../enums/NotificationType.enum";
 import { UserEntity } from "../../user/entities/User.entity";
 
 @Entity()

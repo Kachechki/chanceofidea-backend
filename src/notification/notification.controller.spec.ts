@@ -4,7 +4,7 @@ import { NotificationController } from "./notification.controller";
 import { AuthGuard } from "../auth/guards/Auth.guard";
 import { NotificationEntity } from "./entites/Notification.entity";
 import { ReadNotificationDto } from "../dto/ReadNotification.dto";
-import { NotificationTypeEnum } from "../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../enums/NotificationType.enum";
 
 describe("NotificationController", () => {
   let controller: NotificationController;

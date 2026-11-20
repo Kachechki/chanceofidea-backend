@@ -9,7 +9,7 @@ import { FindOptionsRelations, Repository } from "typeorm";
 import { UserEntity } from "../entities/User.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ISaveUser } from "../../types/SaveUser.interface";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 import { ConfigService } from "@nestjs/config";
 import { IJwtPair } from "../../types/JwtPair.interface";
 import { JwtTokenService } from "../../auth/services/Jwt.service";

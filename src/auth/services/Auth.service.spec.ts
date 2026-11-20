@@ -8,7 +8,7 @@ import { RedisService } from "../../redis/services/Redis.service";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { createHmac } from "crypto";
 import { SettingsService } from "../../settings/services/Settings.service";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 
 describe("AuthService", () => {
   let service: AuthService;

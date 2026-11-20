@@ -14,7 +14,7 @@ import { ApplicationEntity } from "../../application/entities/Application.entity
 import { SettingsEntity } from "../../settings/entities/Settings.entity";
 import { NotificationEntity } from "../../notification/entites/Notification.entity";
 import { ReportEntity } from "../../report/entities/Report.entity";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 
 @Entity()
 export class UserEntity {

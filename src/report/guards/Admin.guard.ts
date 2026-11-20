@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { Observable } from "rxjs";
 import { type IRequestWithRefresh } from "../../types/RequestWithRefresh.interface";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 
 export class AdminGuard implements CanActivate {
   canActivate(

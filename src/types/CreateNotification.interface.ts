@@ -1,4 +1,4 @@
-import { NotificationTypeEnum } from "../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../enums/NotificationType.enum";
 
 export interface ICreateNotification {
   topic: string;

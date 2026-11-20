@@ -6,7 +6,7 @@ import { Repository, DeleteResult } from "typeorm";
 import { NotifiactionService } from "./Notification.service";
 import { NotificationEntity } from "../entites/Notification.entity";
 import { ICreateNotification } from "../../types/CreateNotification.interface";
-import { NotificationTypeEnum } from "../../enum/NotificationType.enum";
+import { NotificationTypeEnum } from "../../enums/NotificationType.enum";
 import { TransferSessionService } from "../../transfer-session/services/TransferSession.service";
 
 describe("NotifiactionService", () => {

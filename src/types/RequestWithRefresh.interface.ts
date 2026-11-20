@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { UserRoleEnum } from "../enum/UserRole.enum";
+import { UserRoleEnum } from "../enums/UserRole.enum";
 
 export interface IRequestWithRefresh extends Request {
   cookies: {

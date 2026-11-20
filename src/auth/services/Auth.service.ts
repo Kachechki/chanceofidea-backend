@@ -15,7 +15,7 @@ import { createHmac, randomInt, timingSafeEqual } from "crypto";
 import { RedisService } from "../../redis/services/Redis.service";
 import { IFinishEmailAuthData } from "../../types/FinishEmailAuthData.interface";
 import { SettingsService } from "../../settings/services/Settings.service";
-import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { UserRoleEnum } from "../../enums/UserRole.enum";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
