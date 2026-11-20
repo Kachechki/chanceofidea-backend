@@ -68,7 +68,8 @@ export class JwtTokenService implements IJwtTokenService {
 
     return this.sign({
       id: updatedUser.id,
-      githubVerified: updatedUser.githubVerified
+      githubVerified: updatedUser.githubVerified,
+      role: updatedUser.role,
     });
   }
 }

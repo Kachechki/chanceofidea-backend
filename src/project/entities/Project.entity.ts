@@ -13,6 +13,7 @@ import { ProjectStatusEnum } from "../../enums/ProjectStatus.enum";
 import { CategoryEntity } from "../../category/entities/Category.entity";
 import { TagEntity } from "../../tag/entities/Tag.entity";
 import { ApplicationEntity } from "../../application/entities/Application.entity";
+import { ReportEntity } from "../../report/entities/Report.entity";
 
 @Entity()
 export class ProjectEntity {
@@ -52,4 +53,7 @@ export class ProjectEntity {
 
   @OneToMany(() => ApplicationEntity, (application) => application.project)
   applications: ApplicationEntity[];
+
+  @OneToMany(() => ReportEntity, (report) => report.project)
+  reports: ReportEntity[];
 }

@@ -35,6 +35,7 @@ interface IProjectSerice {
     ownerId: string,
     relations: FindOptionsRelations<ProjectEntity>,
   ): Promise<ProjectEntity[]>;
+  setStatus(id: string, status: ProjectStatusEnum): Promise<void>;
 }
 
 @Injectable()
@@ -312,5 +313,29 @@ export class ProjectService implements IProjectSerice {
       where: { owner: { id: ownerId } },
       relations,
     });
+  }
+
+  async setStatus(id: string, status: ProjectStatusEnum): Promise<void> {
+    const project = await this.findById(id);
+
+    const availableStatuses =
+      project.status == ProjectStatusEnum.ADOPTED
+        ? [ProjectStatusEnum.SUSPENDED]
+        : ProjectStatusEnum.DRAFT
+          ? [ProjectStatusEnum.PUBLISHED]
+          : ProjectStatusEnum.PUBLISHED
+            ? [ProjectStatusEnum.TRANSFERRING, ProjectStatusEnum.SUSPENDED]
+            : ProjectStatusEnum.TRANSFERRING
+              ? [ProjectStatusEnum.ADOPTED]
+              : ProjectStatusEnum.ADOPTED
+                ? [ProjectStatusEnum.SUSPENDED]
+                : [];
+
+    if (!availableStatuses.includes(status))
+      throw new BadRequestException("The new status for project is impossible");
+
+    project.status = status;
+
+    await this.repository.save(project)
   }
 }

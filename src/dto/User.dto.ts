@@ -13,6 +13,7 @@ import { ProjectDto } from "./ProjectDto";
 import { ApplicationDto } from "./Application.dto";
 import { SettingsDto } from "./Settings.dto";
 import { NotificationDto } from "./Notification.dto";
+import { ReportDto } from "./Report.dto";
 
 export class UserDto {
   @ApiProperty({
@@ -104,4 +105,10 @@ export class UserDto {
   })
   @IsOptional()
   notifications?: NotificationDto[];
+
+  @ApiPropertyOptional({
+    description: "User's written reports",
+    type: () => ReportDto,
+  })
+  reports?: ReportDto;
 }

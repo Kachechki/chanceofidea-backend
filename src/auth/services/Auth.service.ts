@@ -14,6 +14,7 @@ import { createHmac, randomInt, timingSafeEqual } from "crypto";
 import { RedisService } from "../../redis/services/Redis.service";
 import { IFinishEmailAuthData } from "../../types/FinishEmailAuthData.interface";
 import { SettingsService } from "../../settings/services/Settings.service";
+import { UserRoleEnum } from "../../enum/UserRole.enum";
 
 interface IAuthService {
   authenticate(code: string): Promise<IJwtPair>;
@@ -84,7 +85,11 @@ export class AuthService implements IAuthService {
       userId,
     });
 
-    return this.jwtService.sign({ id: userId, githubVerified: true });
+    return this.jwtService.sign({
+      id: userId,
+      githubVerified: true,
+      role: UserRoleEnum.USER,
+    });
   }
 
   async refresh(refresh: string): Promise<IJwtPair> {
@@ -140,6 +145,10 @@ export class AuthService implements IAuthService {
 
     await this.redisService.del(`email-verification:${data.email}`);
 
-    return this.jwtService.sign({ id: userId, githubVerified: false });
+    return this.jwtService.sign({
+      id: userId,
+      githubVerified: false,
+      role: UserRoleEnum.USER,
+    });
   }
 }

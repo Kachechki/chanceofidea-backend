@@ -1,4 +1,14 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiNoContentResponse,
@@ -13,6 +23,8 @@ import { AuthGuard } from "../auth/guards/Auth.guard";
 import { type IRequestWithRefresh } from "../types/RequestWithRefresh.interface";
 import { UserService } from "./services/User.service";
 import { UserDto } from "../dto/User.dto";
+import { BecomeAdminDto } from "../dto/BecomeAdmin.dto";
+import { type Response } from "express";
 
 @ApiTags("Users")
 @ApiBearerAuth()
@@ -69,5 +81,24 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async passOboarding(@Req() req: IRequestWithRefresh): Promise<void> {
     await this.userService.passOnboarding(req.user.id);
+  }
+
+  @Post("/become-admin")
+  async becomeAdmin(
+    @Req() req: IRequestWithRefresh,
+    @Body() dto: BecomeAdminDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const jwt = await this.userService.becomeAdmin(req.user.id, dto.code);
+
+    res.set("access", jwt.access);
+
+    res.cookie("refresh", jwt.refresh, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 3600 * 1000,
+    });
   }
 }

@@ -28,7 +28,6 @@ import { MailModule } from "./mail/mail.module";
 import "dotenv/config";
 import { BullModule } from "@nestjs/bullmq";
 import { RedisModule } from "./redis/redis.module";
-import { SettingsController } from "./settings/settings.controller";
 import { SettingsModule } from "./settings/settings.module";
 import SMTPConfig from "./config/SMTP.config";
 import RedisConfig from "./config/Redis.config";
@@ -36,7 +35,9 @@ import MailConfig from "./config/Mail.config";
 import { SettingsEntity } from "./settings/entities/Settings.entity";
 import { NotificationModule } from "./notification/notification.module";
 import { NotificationEntity } from "./notification/entites/Notification.entity";
-import { AppealModule } from './appeal/appeal.module';
+import { ReportModule } from "./report/report.module";
+import ModerationConfig from "./config/Moderation.config";
+import { ReportEntity } from "./report/entities/Report.entity";
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -59,6 +60,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
         TransferSessionEntity,
         SettingsEntity,
         NotificationEntity,
+        ReportEntity
       ],
       synchronize: false,
       migrations: [__dirname + "/migrations/*{.js,.ts}"],
@@ -69,7 +71,14 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [GithubConfig, JwtConfig, SMTPConfig, RedisConfig, MailConfig],
+      load: [
+        GithubConfig,
+        JwtConfig,
+        SMTPConfig,
+        RedisConfig,
+        MailConfig,
+        ModerationConfig,
+      ],
     }),
     ProjectModule,
     CategoryModule,
@@ -99,7 +108,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     RedisModule,
     SettingsModule,
     NotificationModule,
-    AppealModule,
+    ReportModule,
   ],
 })
 export class AppModule {}

@@ -5,6 +5,8 @@ import { Repository } from "typeorm";
 import { UserService } from "./User.service";
 import { UserEntity } from "../entities/User.entity";
 import { ISaveUser } from "../../types/SaveUser.interface";
+import { ConfigService } from "@nestjs/config";
+import { JwtTokenService } from "../../auth/services/Jwt.service";
 
 describe("UserService", () => {
   let service: UserService;
@@ -21,6 +23,14 @@ describe("UserService", () => {
             save: jest.fn(),
             findOne: jest.fn(),
           },
+        },
+        {
+          provide: ConfigService,
+          useValue: { getOrThrow: jest.fn() },
+        },
+        {
+          provide: JwtTokenService,
+          useValue: { sign: jest.fn() },
         },
       ],
     }).compile();

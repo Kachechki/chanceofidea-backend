@@ -13,6 +13,8 @@ import { GithubAccessEntity } from "../../auth/entities/GithubAccess.entity";
 import { ApplicationEntity } from "../../application/entities/Application.entity";
 import { SettingsEntity } from "../../settings/entities/Settings.entity";
 import { NotificationEntity } from "../../notification/entites/Notification.entity";
+import { ReportEntity } from "../../report/entities/Report.entity";
+import { UserRoleEnum } from "../../enum/UserRole.enum";
 
 @Entity()
 export class UserEntity {
@@ -46,6 +48,12 @@ export class UserEntity {
   @Column({ type: "boolean", default: false })
   onboardingPassed: boolean;
 
+  @Column({ type: "boolean", default: false })
+  hasApprovedReport: boolean;
+
+  @Column({ type: "enum", enum: UserRoleEnum })
+  role: UserRoleEnum;
+
   @OneToMany(() => ProjectEntity, (project) => project.owner, {
     onDelete: "SET NULL",
   })
@@ -67,4 +75,7 @@ export class UserEntity {
 
   @OneToMany(() => NotificationEntity, (notification) => notification.user)
   notifications: NotificationEntity[];
+
+  @OneToMany(() => ReportEntity, (report) => report.writtenBy)
+  writtenReports: ReportEntity[];
 }

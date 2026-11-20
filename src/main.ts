@@ -35,7 +35,7 @@ async function bootstrap() {
       {
         type: "http",
         scheme: "bearer",
-        bearerFormat: "JWT",
+       bearerFormat: "JWT",
       },
       "main",
     )

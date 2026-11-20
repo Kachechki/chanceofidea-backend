@@ -8,6 +8,7 @@ import { RedisService } from "../../redis/services/Redis.service";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { createHmac } from "crypto";
 import { SettingsService } from "../../settings/services/Settings.service";
+import { UserRoleEnum } from "../../enum/UserRole.enum";
 
 describe("AuthService", () => {
   let service: AuthService;
@@ -197,6 +198,7 @@ describe("AuthService", () => {
       expect(jwtService.sign).toHaveBeenCalledWith({
         id: userId,
         githubVerified: true,
+        role: UserRoleEnum.USER
       });
 
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
@@ -442,6 +444,7 @@ describe("AuthService", () => {
       expect(jwtService.sign).toHaveBeenCalledWith({
         id: userId,
         githubVerified: false,
+        role: UserRoleEnum.USER
       });
     });
 

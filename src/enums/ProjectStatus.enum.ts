@@ -3,4 +3,5 @@ export enum ProjectStatusEnum {
   PUBLISHED = "PUBLISHED",
   TRANSFERRING = "TRANSFERRING",
   ADOPTED = "ADOPTED",
+  SUSPENDED = "SUSPENDED", // due to report
 }

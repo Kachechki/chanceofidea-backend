@@ -1,4 +1,5 @@
 import { Request } from "express";
+import { UserRoleEnum } from "../enum/UserRole.enum";
 
 export interface IRequestWithRefresh extends Request {
   cookies: {
@@ -7,5 +8,5 @@ export interface IRequestWithRefresh extends Request {
   headers: {
     authorization?: string;
   };
-  user: { id: string; githubVerified: boolean };
+  user: { id: string; githubVerified: boolean; role: UserRoleEnum };
 }

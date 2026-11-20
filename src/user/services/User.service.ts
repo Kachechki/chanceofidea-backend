@@ -1,8 +1,18 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { FindOptionsRelations, Repository } from "typeorm";
 import { UserEntity } from "../entities/User.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ISaveUser } from "../../types/SaveUser.interface";
+import { UserRoleEnum } from "../../enum/UserRole.enum";
+import { ConfigService } from "@nestjs/config";
+import { IJwtPair } from "../../types/JwtPair.interface";
+import { JwtTokenService } from "../../auth/services/Jwt.service";
 
 interface IUserService {
   save(data: ISaveUser): Promise<string>;
@@ -12,6 +22,8 @@ interface IUserService {
   ): Promise<UserEntity>;
   findByEmail(email: string): Promise<UserEntity>;
   passOnboarding(userId: string): Promise<void>;
+  report(userId: string): Promise<void>;
+  becomeAdmin(userId: string, code: string): Promise<IJwtPair>;
 }
 
 @Injectable()
@@ -19,6 +31,9 @@ export class UserService implements IUserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly repository: Repository<UserEntity>,
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => JwtTokenService))
+    private readonly jwtService: JwtTokenService,
   ) {}
 
   async save(data: ISaveUser): Promise<string> {
@@ -70,5 +85,35 @@ export class UserService implements IUserService {
     const user = await this.findById(userId);
     user.onboardingPassed = true;
     await this.repository.save(user);
+  }
+
+  async report(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+
+    user.hasApprovedReport = true;
+
+    await this.repository.save(user);
+  }
+
+  async becomeAdmin(userId: string, code: string): Promise<IJwtPair> {
+    const user = await this.repository.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException("User not found");
+
+    if (
+      (await this.configService.getOrThrow<string>(
+        "moderation.becomeAdminCode",
+      )) !== code
+    )
+      throw new BadRequestException("Your admin code is not correct");
+
+    user.role = UserRoleEnum.ADMIN;
+
+    await this.repository.save(user);
+
+    return await this.jwtService.sign({
+      id: user.id,
+      githubVerified: user.githubVerified,
+      role: user.role,
+    });
   }
 }

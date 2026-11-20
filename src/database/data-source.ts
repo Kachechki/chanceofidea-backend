@@ -9,6 +9,7 @@ import { ApplicationEntity } from "../application/entities/Application.entity";
 import { TransferSessionEntity } from "../transfer-session/entities/TransferSession.entity";
 import { SettingsEntity } from "../settings/entities/Settings.entity";
 import { NotificationEntity } from "../notification/entites/Notification.entity";
+import { ReportEntity } from "../report/entities/Report.entity";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ export const AppDataSource = new DataSource({
     TransferSessionEntity,
     SettingsEntity,
     NotificationEntity,
+    ReportEntity
   ],
   synchronize: false,
   migrations: [__dirname + "/migrations/*{.js,.ts}"],
