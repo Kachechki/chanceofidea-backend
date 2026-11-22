@@ -97,7 +97,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ApplicationModule,
     EventEmitterModule.forRoot(),
     TransferSessionModule,
-    CacheModule.register({ isGlobal: true }),
     MailModule,
     BullModule.forRoot({
       connection: {
