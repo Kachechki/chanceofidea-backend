@@ -3,18 +3,18 @@ import {
   ExecutionContext,
   InternalServerErrorException,
 } from "@nestjs/common";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProjectGuard } from "./Project.guard";
 import { ProjectService } from "../services/Project.service";
+import { RedisService } from "../../redis/services/Redis.service";
 
 describe("ProjectGuard", () => {
   let guard: ProjectGuard;
   let projectService: { findById: jest.Mock };
-  let cacheManager: {
+  let redisService: {
     get: jest.Mock;
-    set: jest.Mock;
-  };
+    set: jest.Mock
+  }
 
   const createContext = (request: any): ExecutionContext =>
     ({
@@ -28,7 +28,7 @@ describe("ProjectGuard", () => {
       findById: jest.fn(),
     };
 
-    cacheManager = {
+    redisService = {
       get: jest.fn(),
       set: jest.fn(),
     };
@@ -41,8 +41,8 @@ describe("ProjectGuard", () => {
           useValue: projectService,
         },
         {
-          provide: CACHE_MANAGER,
-          useValue: cacheManager,
+          provide: RedisService,
+          useValue: redisService,
         },
       ],
     }).compile();
@@ -68,7 +68,7 @@ describe("ProjectGuard", () => {
         InternalServerErrorException,
       );
 
-      expect(cacheManager.get).not.toHaveBeenCalled();
+      expect(redisService.get).not.toHaveBeenCalled();
       expect(projectService.findById).not.toHaveBeenCalled();
     });
 
@@ -83,12 +83,12 @@ describe("ProjectGuard", () => {
         new BadRequestException("No project ID provided"),
       );
 
-      expect(cacheManager.get).not.toHaveBeenCalled();
+      expect(redisService.get).not.toHaveBeenCalled();
       expect(projectService.findById).not.toHaveBeenCalled();
     });
 
     it("should get the project ID from the request body", async () => {
-      cacheManager.get.mockResolvedValue(undefined);
+      redisService.get.mockResolvedValue(undefined);
       projectService.findById.mockResolvedValue({
         id: projectId,
         owner: { id: userId },
@@ -102,11 +102,11 @@ describe("ProjectGuard", () => {
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
 
-      expect(cacheManager.get).toHaveBeenCalledWith(projectId);
+      expect(redisService.get).toHaveBeenCalledWith(projectId);
       expect(projectService.findById).toHaveBeenCalledWith(projectId, {
         owner: true,
       });
-      expect(cacheManager.set).toHaveBeenCalledWith(
+      expect(redisService.set).toHaveBeenCalledWith(
         projectId,
         userId,
         1000 * 60 * 2,
@@ -114,7 +114,7 @@ describe("ProjectGuard", () => {
     });
 
     it("should get the project ID from the query when the body is absent", async () => {
-      cacheManager.get.mockResolvedValue(undefined);
+      redisService.get.mockResolvedValue(undefined);
       projectService.findById.mockResolvedValue({
         id: projectId,
         owner: { id: userId },
@@ -127,14 +127,14 @@ describe("ProjectGuard", () => {
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
 
-      expect(cacheManager.get).toHaveBeenCalledWith(projectId);
+      expect(redisService.get).toHaveBeenCalledWith(projectId);
       expect(projectService.findById).toHaveBeenCalledWith(projectId, {
         owner: true,
       });
     });
 
     it("should return true when the cached owner ID matches the authenticated user", async () => {
-      cacheManager.get.mockResolvedValue(userId);
+      redisService.get.mockResolvedValue(userId);
 
       const context = createContext({
         user: { id: userId },
@@ -143,13 +143,13 @@ describe("ProjectGuard", () => {
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
 
-      expect(cacheManager.get).toHaveBeenCalledWith(projectId);
+      expect(redisService.get).toHaveBeenCalledWith(projectId);
       expect(projectService.findById).not.toHaveBeenCalled();
-      expect(cacheManager.set).not.toHaveBeenCalled();
+      expect(redisService.set).not.toHaveBeenCalled();
     });
 
     it("should check the database when the cached owner ID belongs to another user", async () => {
-      cacheManager.get.mockResolvedValue("another-user");
+      redisService.get.mockResolvedValue("another-user");
       projectService.findById.mockResolvedValue({
         id: projectId,
         owner: { id: userId },
@@ -165,7 +165,7 @@ describe("ProjectGuard", () => {
       expect(projectService.findById).toHaveBeenCalledWith(projectId, {
         owner: true,
       });
-      expect(cacheManager.set).toHaveBeenCalledWith(
+      expect(redisService.set).toHaveBeenCalledWith(
         projectId,
         userId,
         1000 * 60 * 2,
@@ -173,7 +173,7 @@ describe("ProjectGuard", () => {
     });
 
     it("should return true and cache the owner ID when the authenticated user owns the project", async () => {
-      cacheManager.get.mockResolvedValue(undefined);
+      redisService.get.mockResolvedValue(undefined);
       projectService.findById.mockResolvedValue({
         id: projectId,
         owner: { id: userId },
@@ -186,7 +186,7 @@ describe("ProjectGuard", () => {
 
       await expect(guard.canActivate(context)).resolves.toBe(true);
 
-      expect(cacheManager.set).toHaveBeenCalledWith(
+      expect(redisService.set).toHaveBeenCalledWith(
         projectId,
         userId,
         1000 * 60 * 2,
@@ -194,7 +194,7 @@ describe("ProjectGuard", () => {
     });
 
     it("should return false when another user owns the project", async () => {
-      cacheManager.get.mockResolvedValue(undefined);
+      redisService.get.mockResolvedValue(undefined);
       projectService.findById.mockResolvedValue({
         id: projectId,
         owner: { id: "another-user" },
@@ -207,11 +207,11 @@ describe("ProjectGuard", () => {
 
       await expect(guard.canActivate(context)).resolves.toBe(false);
 
-      expect(cacheManager.set).not.toHaveBeenCalled();
+      expect(redisService.set).not.toHaveBeenCalled();
     });
 
     it("should propagate errors from ProjectService", async () => {
-      cacheManager.get.mockResolvedValue(undefined);
+      redisService.get.mockResolvedValue(undefined);
 
       const error = new Error("Database error");
       projectService.findById.mockRejectedValue(error);
@@ -226,7 +226,7 @@ describe("ProjectGuard", () => {
 
     it("should propagate errors from the cache", async () => {
       const error = new Error("Cache error");
-      cacheManager.get.mockRejectedValue(error);
+      redisService.get.mockRejectedValue(error);
 
       const context = createContext({
         user: { id: userId },
