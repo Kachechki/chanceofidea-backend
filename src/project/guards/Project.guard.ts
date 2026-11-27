@@ -7,7 +7,6 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 import { ProjectService } from "../services/Project.service";
-import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { RedisService } from "../../redis/services/Redis.service";
 
 @Injectable()

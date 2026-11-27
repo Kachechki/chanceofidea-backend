@@ -23,7 +23,6 @@ import { ApplicationEntity } from "./application/entities/Application.entity";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { TransferSessionModule } from "./transfer-session/transfer-session.module";
 import { TransferSessionEntity } from "./transfer-session/entities/TransferSession.entity";
-import { CacheModule } from "@nestjs/cache-manager";
 import { MailModule } from "./mail/mail.module";
 import "dotenv/config";
 import { BullModule } from "@nestjs/bullmq";
