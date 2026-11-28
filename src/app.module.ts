@@ -37,6 +37,7 @@ import { NotificationEntity } from "./notification/entites/Notification.entity";
 import { ReportModule } from "./report/report.module";
 import ModerationConfig from "./config/Moderation.config";
 import { ReportEntity } from "./report/entities/Report.entity";
+import { RedisCacheModule } from './redis-cache/redis-cache.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -107,6 +108,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     SettingsModule,
     NotificationModule,
     ReportModule,
+    RedisCacheModule,
   ],
 })
 export class AppModule {}

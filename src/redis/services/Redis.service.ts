@@ -24,6 +24,8 @@ export class RedisService
     this.client = new Redis({
       port: this.configService.getOrThrow<number>("redis.port"),
       host: this.configService.getOrThrow<string>("redis.host"),
+      tls: this.configService.getOrThrow<boolean>("redis.tls") ? {} : undefined,
+      password: this.configService.getOrThrow<string>("redis.password"),
     });
 
     this.client.on("error", (err) => {

@@ -2,12 +2,11 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
-  Inject,
   Injectable,
   InternalServerErrorException,
 } from "@nestjs/common";
 import { ProjectService } from "../services/Project.service";
-import { RedisService } from "../../redis/services/Redis.service";
+import { RedisCacheService } from "../../redis-cache/services/RedisCache.service";
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
@@ -15,7 +14,7 @@ export class ProjectGuard implements CanActivate {
   // the project you are interacting with is yours
   constructor(
     private readonly projectService: ProjectService,
-    private readonly redisService: RedisService
+    private readonly redisCacheService: RedisCacheService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -27,7 +26,7 @@ export class ProjectGuard implements CanActivate {
     if (!projectId) throw new BadRequestException("No project ID provided");
 
     // Try to find project in cache first
-    const owner2project = await this.redisService.get(projectId);
+    const owner2project = await this.redisCacheService.get(projectId);
 
     if (req.user.id == owner2project) return true;
     else {
@@ -36,7 +35,7 @@ export class ProjectGuard implements CanActivate {
       });
 
       if (project.owner.id == req.user.id) {
-        await this.redisService.set(project.id, req.user.id, 1000 * 60 * 2);
+        await this.redisCacheService.set(project.id, req.user.id, 1000 * 60 * 2);
 
         return true;
       }

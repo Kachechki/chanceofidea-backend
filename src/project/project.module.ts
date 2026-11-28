@@ -8,7 +8,7 @@ import { TagModule } from "../tag/tag.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
 import { TransferSessionModule } from "../transfer-session/transfer-session.module";
-import { RedisModule } from "../redis/redis.module";
+import { RedisCacheModule } from "../redis-cache/redis-cache.module";
 
 @Module({
   imports: [
@@ -18,7 +18,7 @@ import { RedisModule } from "../redis/redis.module";
     AuthModule,
     UserModule,
     TransferSessionModule,
-    RedisModule,
+    RedisCacheModule,
   ],
   controllers: [ProjectController],
   providers: [ProjectService],

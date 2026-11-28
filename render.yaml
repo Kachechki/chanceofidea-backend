@@ -1,7 +1,7 @@
 services:
   - type: web
     name: nestjs-docker-backend
-    env: docker
+    runtime: docker
     plan: free 
     
     envVars:
@@ -42,11 +42,35 @@ services:
       - key: REDIS_HOST
         sync: false
 
-      -key: REDIS_PORT
+      - key: REDIS_PORT
         sync: false
 
-  - type: redis
+      - key: REDIS_TLS
+        sync: false
+
+      - key: REDIS_PASSWORD
+        sync: false
+
+      - key: REDIS_CACHE_HOST
+        sync: false
+
+      - key: REDIS_CACHE_PORT
+        sync: false
+
+      - key: REDIS_CACHE_TLS
+        sync: false
+
+      - key: REDIS_CACHE_PASSWORD
+        sync: false
+
+  - type: keyvalue
     name: redis-process
     plan: free
-    maxmemoryPolicy; allkeys-lru
-    ipAllowList: [] # Local services only. Change if using external redis service
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: [31.144.141.208] # Local services only. Change if using external redis service
+
+  - type: keyvalue
+    name: redis-cache-process
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: [31.144.141.208]

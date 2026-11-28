@@ -18,13 +18,14 @@ services:
     depends_on:
       - db
       - redis
+      - redis-cache
     volumes:
       - .:/app:rw
       - /app/node_modules
     env_file:
       - .env
     environment:
-      DB_HOST: db
+      DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -35,7 +36,10 @@ services:
 
   redis:
     image: redis:alpine
-    ports: ["${REDIS_PORT}:${REDIS_PORT}"]
+    restart: unless-stopped
+
+  redis-cache:
+    image: redis:alpine
     restart: unless-stopped
 
 volumes:

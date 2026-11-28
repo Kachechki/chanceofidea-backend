@@ -3,15 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on:
-      - redis
     volumes:
       - .:/app:rw
       - /app/node_modules
     env_file:
       - .env
     environment:
-      DB_HOST: db
+      DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -19,7 +17,3 @@ services:
     command: npx nest start --watch
     ports:
       - "${PORT}:${PORT}"
-
-  redis:
-    image: "redis:alpine"
-    restart: unless-stopped
